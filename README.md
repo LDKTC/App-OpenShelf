@@ -65,9 +65,25 @@ flutter build apk --debug
 
 `flutter analyze` and `flutter test` both pass as of this scaffold. A
 GitHub Actions workflow (`.github/workflows/build.yml`) builds a debug APK
-on every push/PR as a CI check and artifact — useful in environments (like
-the one this scaffold was prepared in) where the Android SDK itself isn't
-reachable, so the APK can't be built locally there.
+and a release APK on every push/PR as a CI check and artifact — useful in
+environments (like the one this scaffold was prepared in) where the
+Android SDK itself isn't reachable, so the APK can't be built locally
+there.
+
+### Release builds
+
+`.github/workflows/release.yml` builds a release `.apk` and publishes it
+as a (pre-release) GitHub Release with the APK attached, either:
+
+- automatically, on pushing a tag matching `v*.*.*` (e.g. `git tag
+  v0.1.0-prototype && git push origin v0.1.0-prototype`), or
+- manually, via the "Run workflow" button on the Release workflow in the
+  Actions tab, entering a tag name.
+
+The release build is signed with the Flutter debug keystore (see
+`android/app/build.gradle.kts`), same as `flutter build apk --release`
+locally — fine for prototype distribution, but replace it with a real
+signing config before a production/Play Store release.
 
 ## NLT SRU configuration
 
