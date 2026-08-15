@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/book.dart';
 import '../models/cover_preset.dart';
 import '../services/image_storage_service.dart';
@@ -23,11 +24,12 @@ class BookDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final library = context.watch<LibraryProvider>();
     final book = library.getById(bookId);
+    final t = AppLocalizations.of(context);
 
     if (book == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: const Center(child: Text('This book was removed.')),
+        body: Center(child: Text(t.bookRemovedMessage)),
       );
     }
 
@@ -53,20 +55,23 @@ class BookDetailScreen extends StatelessWidget {
             onPressed: () async {
               final confirmed = await showDialog<bool>(
                 context: context,
-                builder: (ctx) => AlertDialog(
-                  title: const Text('Remove book?'),
-                  content: Text('Delete "${book.title}" from your library?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(ctx).pop(false),
-                      child: const Text('Cancel'),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.of(ctx).pop(true),
-                      child: const Text('Delete'),
-                    ),
-                  ],
-                ),
+                builder: (ctx) {
+                  final t = AppLocalizations.of(ctx);
+                  return AlertDialog(
+                    title: Text(t.removeBookTitle),
+                    content: Text(t.deleteBookConfirm(book.title)),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(false),
+                        child: Text(t.cancel),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(true),
+                        child: Text(t.delete),
+                      ),
+                    ],
+                  );
+                },
               );
               if (confirmed == true) {
                 await library.deleteBook(bookId);
@@ -98,7 +103,7 @@ class BookDetailScreen extends StatelessWidget {
                     if (book.illustrators.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Text(
-                        'Illustrated by ${book.illustrators.join(', ')}',
+                        t.illustratedBy(book.illustrators.join(', ')),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -113,7 +118,7 @@ class BookDetailScreen extends StatelessWidget {
                     ],
                     if (book.isbn13 != null) ...[
                       const SizedBox(height: 4),
-                      Text('ISBN ${book.isbn13}', style: Theme.of(context).textTheme.bodySmall),
+                      Text(t.isbnLabel(book.isbn13!), style: Theme.of(context).textTheme.bodySmall),
                     ],
                   ],
                 ),
@@ -126,13 +131,13 @@ class BookDetailScreen extends StatelessWidget {
               MaterialPageRoute(builder: (_) => CoverPresetsScreen(book: book)),
             ),
             icon: const Icon(Icons.camera_alt_outlined, size: 18),
-            label: Text(activePreset == null ? 'Scan cover' : 'Manage covers'),
+            label: Text(activePreset == null ? t.scanCoverLabel : t.manageCoversLabel),
           ),
           const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Reading status', style: Theme.of(context).textTheme.labelLarge),
+              Text(t.readingStatusLabel, style: Theme.of(context).textTheme.labelLarge),
               StatusChip(currentType: library.currentStampFor(bookId)?.type),
             ],
           ),
@@ -140,7 +145,7 @@ class BookDetailScreen extends StatelessWidget {
           StampTimeline(bookId: bookId),
           if (categories.isNotEmpty) ...[
             const SizedBox(height: 20),
-            Text('Categories', style: Theme.of(context).textTheme.labelLarge),
+            Text(t.categoriesLabel, style: Theme.of(context).textTheme.labelLarge),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -151,13 +156,13 @@ class BookDetailScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Saved pages', style: Theme.of(context).textTheme.labelLarge),
+              Text(t.savedPagesLabel, style: Theme.of(context).textTheme.labelLarge),
               if (pages.isNotEmpty)
                 TextButton(
                   onPressed: () => Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => BookPagesScreen(book: book)),
                   ),
-                  child: const Text('View all'),
+                  child: Text(t.viewAllLabel),
                 ),
             ],
           ),
@@ -168,7 +173,7 @@ class BookDetailScreen extends StatelessWidget {
                 MaterialPageRoute(builder: (_) => PageScanScreen(book: book)),
               ),
               icon: const Icon(Icons.add_a_photo_outlined, size: 18),
-              label: const Text('Save a page'),
+              label: Text(t.savePageTitle),
             )
           else
             SizedBox(
@@ -208,20 +213,20 @@ class BookDetailScreen extends StatelessWidget {
             ),
           if (book.description != null) ...[
             const SizedBox(height: 20),
-            Text('Description', style: Theme.of(context).textTheme.labelLarge),
+            Text(t.descriptionLabel, style: Theme.of(context).textTheme.labelLarge),
             const SizedBox(height: 8),
             Text(book.description!),
           ],
           if (book.notes != null) ...[
             const SizedBox(height: 20),
-            Text('My notes', style: Theme.of(context).textTheme.labelLarge),
+            Text(t.myNotesLabel, style: Theme.of(context).textTheme.labelLarge),
             const SizedBox(height: 8),
             Text(book.notes!),
           ],
           if (book.source != null) ...[
             const SizedBox(height: 20),
             Text(
-              'Source: ${book.source}',
+              t.sourceLabel(book.source!),
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
