@@ -92,7 +92,7 @@ class _StampTile extends StatelessWidget {
   Future<void> _confirmDelete(BuildContext context, ReadingStamp stamp) async {
     final library = context.read<LibraryProvider>();
     final t = AppLocalizations.of(context);
-    final (_, __, statusLabel) = stampVisuals(t, stamp.type);
+    final (_, _, statusLabel) = stampVisuals(t, stamp.type);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
