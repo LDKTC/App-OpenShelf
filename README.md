@@ -23,6 +23,10 @@ library, stored locally on-device in SQLite.
   (Unread / Reading / Read).
 - **Fully local**: all data lives in an on-device SQLite database
   (via `sqflite`) — nothing is synced anywhere.
+- **In-app updates**: since OpenShelf isn't distributed through the Play
+  Store, **Settings → App update** checks GitHub Releases for a newer
+  build and installs it over the existing app — see [App updates](#app-updates)
+  below.
 
 ## Tech stack
 
@@ -33,18 +37,22 @@ library, stored locally on-device in SQLite.
 - `provider` for state management
 - `http` + `xml` for metadata lookups (Google Books JSON, Open Library
   JSON, NLT Alma MARCXML-over-SRU)
+- `package_info_plus` + `path_provider` for the in-app updater (current
+  version check, downloaded-APK staging)
 
 ## Project layout
 
 ```
 lib/
-  models/            Book, BookCategory, ReadStatus, BookMetadata
+  models/            Book, BookCategory, ReadStatus, BookMetadata, AppUpdateInfo
   services/
     database_service.dart       sqflite schema + CRUD
     isbn_utils.dart             ISBN validation/normalization, Thai-ISBN detection
     settings_service.dart       persisted app settings (NLT SRU URL)
     book_metadata_service.dart  orchestrates provider lookup order
     metadata_providers/         google_books, open_library, nlt_alma_sru
+    update_service.dart         checks GitHub Releases, downloads + installs the APK
+    apk_installer.dart          platform channel to the native install-APK intent
   state/library_provider.dart   app state (ChangeNotifier) wrapping the DB
   screens/                      library list, scan, book detail/edit, categories, settings
   widgets/                      shared UI pieces
@@ -110,6 +118,33 @@ Google Books and Open Library — Thai lookups just won't be as complete. If a
 scanned Thai ISBN (978-616 / 978-974) has no match anywhere and the SRU URL
 isn't configured yet, the Scan screen says so explicitly and offers a button
 straight to Settings, instead of just reporting a generic "not found".
+
+## App updates
+
+OpenShelf isn't distributed through the Play Store, so it can't rely on
+Play's automatic update mechanism. Instead, **Settings → App update** lets
+an existing install update itself in place:
+
+1. Tap **Check for updates**. The app queries the GitHub Releases API
+   (`/repos/LDKTC/App-OpenShelf/releases/latest`, published by
+   `.github/workflows/release.yml`) and compares its `tag_name` against
+   the running app's version (`PackageInfo`/`pubspec.yaml`).
+2. If a newer release has an `.apk` asset attached, tap **Download &
+   install**. The APK is downloaded to the app's private cache
+   (`<cache>/updates/`), then handed to Android's system package installer
+   via a `FileProvider` content URI and the `android.permission.VIEW`
+   `application/vnd.android.package-archive` intent (see `MainActivity.kt`
+   and `android:name="android.permission.REQUEST_INSTALL_PACKAGES"` in
+   `AndroidManifest.xml`).
+3. The OS will prompt to allow "install unknown apps" for OpenShelf the
+   first time (Android's standard sideload-install flow), then shows the
+   normal package-installer confirmation screen. Installing over the
+   existing app keeps your local library/settings intact, same as any
+   Android app update.
+
+This only surfaces releases that are actually published — see
+[Release builds](#release-builds) above for how a new version gets
+tagged and built.
 
 ## Notes on this environment
 
