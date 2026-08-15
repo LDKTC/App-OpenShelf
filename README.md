@@ -9,14 +9,8 @@ library, stored locally on-device in SQLite.
 - **Scan-to-add**: scan an ISBN-10/13 barcode with the camera and look up
   the book automatically.
 - **Metadata lookup**:
-  - International/English books: [Google Books API](https://developers.google.com/books) first,
+  - Books: [Google Books API](https://developers.google.com/books) first,
     falling back to [Open Library](https://openlibrary.org/dev/docs/api/books).
-  - Thai books (ISBN group `978-616` or `978-974`): queried against the
-    [National Library of Thailand](https://nlt.primo.exlibrisgroup.com/nde/home?vid=66NLT_INST:66NLT&lang=th)'s
-    Alma catalog via the SRU protocol first, since Thai-language titles are
-    far more complete there than in the international catalogs. See
-    [NLT SRU configuration](#nlt-sru-configuration) below — this needs a
-    one-time setup step.
   - Light novels: [RanobeDB](https://ranobedb.org) is tried last as a
     specialized fallback. Its [public API](https://ranobedb.org/api/docs/v0)
     has no direct ISBN search, so this is best-effort — see the note in
@@ -71,8 +65,8 @@ library, stored locally on-device in SQLite.
 - `google_mlkit_text_recognition` for on-device OCR (default; Latin script
   only), with an optional Cloud Vision API fallback for Thai text
 - `provider` for state management
-- `http` + `xml` for metadata lookups (Google Books JSON, Open Library
-  JSON, NLT Alma MARCXML-over-SRU) and the optional Cloud Vision OCR call
+- `http` for metadata lookups (Google Books JSON, Open Library JSON) and
+  the optional Cloud Vision OCR call
 - `package_info_plus` + `path_provider` for the in-app updater (current
   version check, downloaded-APK staging)
 
@@ -84,12 +78,12 @@ lib/
                       BookMetadata, AppUpdateInfo
   services/
     database_service.dart       sqflite schema + CRUD
-    isbn_utils.dart             ISBN validation/normalization, Thai-ISBN detection
-    settings_service.dart       persisted app settings (NLT SRU URL, Cloud Vision
-                                 API key, shelf display mode)
+    isbn_utils.dart             ISBN validation/normalization
+    settings_service.dart       persisted app settings (Cloud Vision API key,
+                                 shelf display mode)
     book_metadata_service.dart  orchestrates provider lookup order
     book_lookup_service.dart    shared ISBN -> existing book/metadata/not-found resolution
-    metadata_providers/         google_books, open_library, nlt_alma_sru, ranobedb
+    metadata_providers/         google_books, open_library, ranobedb
     document_scanner_service.dart  cover/spine/back capture via the ML Kit document scanner
     ocr_service.dart            scan-to-fill OCR: Cloud Vision if configured, else on-device
     image_storage_service.dart  persists scanned cover/page photos on-device
@@ -131,36 +125,19 @@ as a GitHub Release with the APK attached, either:
 - manually, via the "Run workflow" button on the Release workflow in the
   Actions tab, entering a tag name.
 
-The release build is signed with the Flutter debug keystore (see
-`android/app/build.gradle.kts`), same as `flutter build apk --release`
-locally — fine for prototype distribution, but replace it with a real
-signing config before a production/Play Store release.
-
-## NLT SRU configuration
-
-The National Library of Thailand's Alma SRU endpoint (needed for Thai-ISBN
-lookups) is specific to their Alma tenant and isn't publicly documented, so
-it ships unset — Thai lookups fall back to Google Books/Open Library until
-you configure it. To set it up:
-
-1. In the app, go to **Settings**.
-2. Enter the SRU base URL in the field provided. Alma SRU URLs follow the
-   pattern `https://<region-cluster>.alma.exlibrisgroup.com/view/sru/<institution_code>`.
-   NLT's Primo institution code is `66NLT_INST` (from the Primo VID in
-   `https://nlt.primo.exlibrisgroup.com/nde/home?vid=66NLT_INST:66NLT`),
-   but the region cluster (`na01`, `eu03`, `ap01`, etc.) isn't derivable
-   from the Primo URL — get the exact SRU base URL from NLT/Ex Libris
-   support, or from Alma's own admin UI under
-   **Resources Configuration → Search → SRU**, if you have Alma admin
-   access.
-3. Tap **Test connection** to confirm the endpoint is reachable and
-   returns a well-formed SRU response.
-
-If left unset, or if a request to it fails, the app silently falls back to
-Google Books and Open Library — Thai lookups just won't be as complete. If a
-scanned Thai ISBN (978-616 / 978-974) has no match anywhere and the SRU URL
-isn't configured yet, the Scan screen says so explicitly and offers a button
-straight to Settings, instead of just reporting a generic "not found".
+The release build is signed with a shared keystore committed at
+`android/app/release-keystore.jks` (configured via `android/key.properties`,
+loaded by `android/app/build.gradle.kts`), so every build — CI or local —
+signs with the same certificate. This matters because Android refuses to
+install an "update" APK signed with a different certificate than the one
+already on the device ("App not installed as package conflicts with an
+existing package"); before this, every CI run signed with a freshly
+auto-generated debug keystore, so no two release builds shared a
+certificate. This is still not a production-grade key — replace it with a
+real, unshared signing config before a production/Play Store release. If
+you've already got a build installed from before this change, you'll need
+to uninstall it once before an update signed with the new shared key will
+install.
 
 ## OCR text scanning
 

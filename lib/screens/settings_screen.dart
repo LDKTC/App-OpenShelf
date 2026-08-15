@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/app_update_info.dart';
-import '../services/metadata_providers/nlt_alma_sru_provider.dart';
 import '../services/settings_service.dart';
 import '../services/update_service.dart';
+import '../state/library_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -13,12 +15,9 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  final _sruUrlController = TextEditingController();
   final _visionApiKeyController = TextEditingController();
   final _updateService = UpdateService();
   bool _loading = true;
-  bool _testing = false;
-  String? _testResult;
   bool _visionKeyObscured = true;
 
   bool _checkingUpdate = false;
@@ -35,20 +34,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _load() async {
-    final url = await SettingsService.instance.getSruBaseUrl();
-    _sruUrlController.text = url ?? '';
     final visionKey = await SettingsService.instance.getCloudVisionApiKey();
     _visionApiKeyController.text = visionKey ?? '';
     setState(() => _loading = false);
-  }
-
-  Future<void> _save() async {
-    await SettingsService.instance.setSruBaseUrl(_sruUrlController.text);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Saved.')),
-      );
-    }
   }
 
   Future<void> _saveVisionApiKey() async {
@@ -56,27 +44,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         .setCloudVisionApiKey(_visionApiKeyController.text);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Saved.')),
+        SnackBar(content: Text(AppLocalizations.of(context).saved)),
       );
-    }
-  }
-
-  Future<void> _testConnection() async {
-    setState(() {
-      _testing = true;
-      _testResult = null;
-    });
-    await SettingsService.instance.setSruBaseUrl(_sruUrlController.text);
-    try {
-      // A well-known Thai ISBN prefix is enough to exercise the endpoint;
-      // a null result here just means "no record", which still proves the
-      // endpoint is reachable and returning a well-formed SRU response.
-      await NltAlmaSruProvider().lookup('9786160000000');
-      setState(() => _testResult = 'Endpoint reachable and responded.');
-    } catch (e) {
-      setState(() => _testResult = 'Could not reach endpoint: $e');
-    } finally {
-      setState(() => _testing = false);
     }
   }
 
@@ -86,18 +55,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _updateStatus = null;
       _availableUpdate = null;
     });
+    final t = AppLocalizations.of(context);
     try {
       final current = await _updateService.currentVersion();
       final update = await _updateService.checkForUpdate();
       setState(() {
         _currentVersion = current;
         _availableUpdate = update;
-        _updateStatus = update == null
-            ? "You're up to date (v$current)."
-            : 'Update available: v${update.version}';
+        _updateStatus =
+            update == null ? t.upToDate(current) : t.updateAvailable(update.version);
       });
     } catch (e) {
-      setState(() => _updateStatus = 'Could not check for updates: $e');
+      setState(() => _updateStatus = t.couldNotCheckForUpdates('$e'));
     } finally {
       if (mounted) setState(() => _checkingUpdate = false);
     }
@@ -121,7 +90,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Update failed: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context).updateFailed('$e'))),
         );
       }
     } finally {
@@ -131,7 +100,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   void dispose() {
-    _sruUrlController.dispose();
     _visionApiKeyController.dispose();
     _updateService.dispose();
     super.dispose();
@@ -139,75 +107,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final library = context.watch<LibraryProvider>();
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(t.settingsTitle)),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
                 Text(
-                  'National Library of Thailand (NLT) lookup',
+                  t.languageSectionTitle,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Thai-language ISBNs (prefix 978-616 or 978-974) are looked '
-                  'up against NLT\'s Alma catalog via SRU. NLT\'s SRU base URL '
-                  'is specific to their Alma tenant and isn\'t public — ask '
-                  'NLT/Alma support for it, or find it under Alma Configuration '
-                  '> Resources > Search > SRU. It typically looks like '
-                  'https://<region>.alma.exlibrisgroup.com/view/sru/66NLT_INST. '
-                  'Until this is set, Thai books fall back to Google Books / '
-                  'Open Library, which may not have them.',
+                  t.languageSectionBody,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 16),
-                TextField(
-                  controller: _sruUrlController,
-                  decoration: const InputDecoration(
-                    labelText: 'SRU base URL',
-                    hintText: 'https://<region>.alma.exlibrisgroup.com/view/sru/66NLT_INST',
-                  ),
-                  keyboardType: TextInputType.url,
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    FilledButton(onPressed: _save, child: const Text('Save')),
-                    const SizedBox(width: 12),
-                    OutlinedButton(
-                      onPressed: _testing ? null : _testConnection,
-                      child: _testing
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Test connection'),
-                    ),
+                SegmentedButton<AppLocale>(
+                  segments: [
+                    for (final locale in AppLocale.values)
+                      ButtonSegment(value: locale, label: Text(locale.label(t))),
                   ],
+                  selected: {library.appLocale},
+                  onSelectionChanged: (selected) =>
+                      library.setAppLocale(selected.first),
                 ),
-                if (_testResult != null) ...[
-                  const SizedBox(height: 12),
-                  Text(_testResult!),
-                ],
                 const Divider(height: 40),
                 Text(
-                  'Text scanning (OCR)',
+                  t.ocrSectionTitle,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'The camera-scan buttons next to Title, Authors, '
-                  'Illustrators, ISBN, and Publisher in the book editor use '
-                  'on-device text recognition by default — free and '
-                  'offline, but Latin-script only, so Thai text won\'t be '
-                  'read correctly. Enter a Google Cloud Vision API key here '
-                  'to use it instead: it reads Thai as well as Latin text, '
-                  'at the cost of a network request per scan billed to your '
-                  'Cloud account. Leave it blank to keep using on-device '
-                  'recognition.',
+                  t.ocrSectionBody,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 16),
@@ -215,7 +150,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   controller: _visionApiKeyController,
                   obscureText: _visionKeyObscured,
                   decoration: InputDecoration(
-                    labelText: 'Cloud Vision API key (optional)',
+                    labelText: t.cloudVisionKeyField,
                     suffixIcon: IconButton(
                       icon: Icon(
                         _visionKeyObscured
@@ -231,19 +166,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 12),
                 FilledButton(
                   onPressed: _saveVisionApiKey,
-                  child: const Text('Save'),
+                  child: Text(t.save),
                 ),
                 const Divider(height: 40),
                 Text(
-                  'App update',
+                  t.appUpdateSectionTitle,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'QuetzaLib isn\'t distributed through the Play Store, so '
-                  'updates are installed the same way as the first install: '
-                  'downloading the latest APK and installing it over this '
-                  'app. Your books and settings are kept.',
+                  t.appUpdateSectionBody,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 12),
@@ -257,7 +189,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               height: 16,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('Check for updates'),
+                          : Text(t.checkForUpdates),
                     ),
                     if (_availableUpdate != null) ...[
                       const SizedBox(width: 12),
@@ -265,8 +197,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         onPressed: _downloading ? null : _downloadAndInstall,
                         child: Text(
                           _downloading
-                              ? 'Downloading… ${(_downloadProgress * 100).round()}%'
-                              : 'Download & install',
+                              ? t.downloading(
+                                  (_downloadProgress * 100).round().toString())
+                              : t.downloadAndInstall,
                         ),
                       ),
                     ],
@@ -292,7 +225,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 if (_currentVersion != null) ...[
                   const SizedBox(height: 12),
                   Text(
-                    'Current version: $_currentVersion',
+                    t.currentVersion(_currentVersion!),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],

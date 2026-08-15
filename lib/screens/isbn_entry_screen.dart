@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../services/book_lookup_service.dart';
 import '../state/library_provider.dart';
 import 'book_detail_screen.dart';
@@ -45,7 +46,7 @@ class _IsbnEntryScreenState extends State<IsbnEntryScreen> {
       case IsbnLookupInvalid():
         setState(() {
           _busy = false;
-          _error = '"$raw" doesn\'t look like a valid ISBN-10/13.';
+          _error = AppLocalizations.of(context).invalidIsbnError(raw);
         });
       case IsbnLookupExisting(:final book):
         Navigator.of(context).pushReplacement(
@@ -64,16 +65,16 @@ class _IsbnEntryScreenState extends State<IsbnEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Enter ISBN')),
+      appBar: AppBar(title: Text(t.enterIsbnTitle)),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Type or paste the ISBN printed near the barcode on the back '
-              'of the book.',
+              t.enterIsbnBody,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 16),
@@ -82,7 +83,7 @@ class _IsbnEntryScreenState extends State<IsbnEntryScreen> {
               keyboardType: TextInputType.text,
               autofocus: true,
               decoration: InputDecoration(
-                labelText: 'ISBN-10 or ISBN-13',
+                labelText: t.isbnField,
                 errorText: _error,
               ),
               onSubmitted: (_) => _submit(),
@@ -96,7 +97,7 @@ class _IsbnEntryScreenState extends State<IsbnEntryScreen> {
                       height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Look up'),
+                  : Text(t.lookUp),
             ),
           ],
         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../services/settings_service.dart';
 import '../state/library_provider.dart';
 import '../widgets/book_list_tile.dart';
@@ -37,10 +38,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Widget build(BuildContext context) {
     final library = context.watch<LibraryProvider>();
     final books = library.filteredBooks;
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Library'),
+        title: Text(t.myLibrary),
         actions: [
           if (_shelfView)
             IconButton(
@@ -50,8 +52,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     : Icons.view_agenda_outlined,
               ),
               tooltip: library.shelfDisplayMode == ShelfDisplayMode.spine
-                  ? 'Showing spines · tap for covers'
-                  : 'Showing covers · tap for spines',
+                  ? t.showingSpinesTapForCovers
+                  : t.showingCoversTapForSpines,
               onPressed: () => library.setShelfDisplayMode(
                 library.shelfDisplayMode == ShelfDisplayMode.spine
                     ? ShelfDisplayMode.cover
@@ -60,7 +62,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
             ),
           IconButton(
             icon: Icon(_shelfView ? Icons.view_list_outlined : Icons.grid_view_outlined),
-            tooltip: _shelfView ? 'List view' : 'Shelf view',
+            tooltip: _shelfView ? t.listViewTooltip : t.shelfViewTooltip,
             onPressed: () => setState(() => _shelfView = !_shelfView),
           ),
         ],
@@ -72,11 +74,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search title, author, ISBN',
+                hintText: t.searchHint,
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.qr_code_scanner),
-                  tooltip: 'Scan to search',
+                  tooltip: t.scanToSearch,
                   onPressed: () => Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => const ScanScreen(mode: ScanMode.search),
@@ -94,9 +96,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               children: [
-                const _StatusFilterChip(filter: null, label: 'All'),
+                _StatusFilterChip(filter: null, label: t.filterAll),
                 for (final filter in LibraryStatusFilter.values)
-                  _StatusFilterChip(filter: filter, label: filter.label),
+                  _StatusFilterChip(filter: filter, label: filter.label(t)),
                 if (library.categories.isNotEmpty) ...[
                   const VerticalDivider(width: 16),
                   for (final category in library.categories)
@@ -178,7 +180,7 @@ class _EmptyState extends StatelessWidget {
             Icon(Icons.auto_stories, size: 64, color: Theme.of(context).colorScheme.outline),
             const SizedBox(height: 12),
             Text(
-              'No books yet. Scan a barcode or add one manually to get started.',
+              AppLocalizations.of(context).emptyLibrary,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
@@ -192,6 +194,7 @@ class _EmptyState extends StatelessWidget {
 class _AddBookMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return MenuAnchor(
       builder: (context, controller, child) {
         return FloatingActionButton(
@@ -205,21 +208,21 @@ class _AddBookMenu extends StatelessWidget {
           onPressed: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const ScanScreen()),
           ),
-          child: const Text('Scan ISBN barcode'),
+          child: Text(t.scanIsbnBarcode),
         ),
         MenuItemButton(
           leadingIcon: const Icon(Icons.pin_outlined),
           onPressed: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const IsbnEntryScreen()),
           ),
-          child: const Text('Enter ISBN number'),
+          child: Text(t.enterIsbnNumber),
         ),
         MenuItemButton(
           leadingIcon: const Icon(Icons.edit_outlined),
           onPressed: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const BookEditScreen()),
           ),
-          child: const Text('Add manually'),
+          child: Text(t.addManually),
         ),
       ],
     );

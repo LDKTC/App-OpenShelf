@@ -7,19 +7,6 @@ enum StampType { reading, finished, dropped, paused }
 extension StampTypeX on StampType {
   String get storageValue => name;
 
-  String get label {
-    switch (this) {
-      case StampType.reading:
-        return 'Reading';
-      case StampType.finished:
-        return 'Finished';
-      case StampType.dropped:
-        return 'Dropped';
-      case StampType.paused:
-        return 'Paused';
-    }
-  }
-
   static StampType? fromStorage(String? value) {
     if (value == null) return null;
     for (final type in StampType.values) {

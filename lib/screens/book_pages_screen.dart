@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/book.dart';
 import '../models/book_page.dart';
 import '../state/library_provider.dart';
@@ -18,9 +19,10 @@ class BookPagesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final library = context.watch<LibraryProvider>();
     final pages = library.pagesFor(book.id!);
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Saved pages')),
+      appBar: AppBar(title: Text(t.savedPagesTitle)),
       body: pages.isEmpty
           ? const _EmptyState()
           : GridView.builder(
@@ -46,7 +48,7 @@ class BookPagesScreen extends StatelessWidget {
           MaterialPageRoute(builder: (_) => PageScanScreen(book: book)),
         ),
         icon: const Icon(Icons.add_a_photo_outlined),
-        label: const Text('Add page'),
+        label: Text(t.addPageLabel),
       ),
     );
   }
@@ -57,6 +59,7 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -70,8 +73,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'No saved pages yet. Photograph a page or illustration you '
-              'want to remember.',
+              t.noSavedPagesYet,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
@@ -121,25 +123,28 @@ class _PageDetailScreen extends StatelessWidget {
     final controller = TextEditingController(text: current.note ?? '');
     final newNote = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Edit note'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          maxLines: 3,
-          decoration: const InputDecoration(labelText: 'Note'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
+      builder: (ctx) {
+        final t = AppLocalizations.of(ctx);
+        return AlertDialog(
+          title: Text(t.editNoteTitle),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            maxLines: 3,
+            decoration: InputDecoration(labelText: t.editNoteField),
           ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(t.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(controller.text),
+              child: Text(t.save),
+            ),
+          ],
+        );
+      },
     );
     if (newNote == null) return;
     final trimmed = newNote.trim();
@@ -155,20 +160,23 @@ class _PageDetailScreen extends StatelessWidget {
   ) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete this page?'),
-        content: const Text('This saved page and its photo will be removed.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      builder: (ctx) {
+        final t = AppLocalizations.of(ctx);
+        return AlertDialog(
+          title: Text(t.deletePageTitle),
+          content: Text(t.deletePageBody),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(t.cancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(t.delete),
+            ),
+          ],
+        );
+      },
     );
     if (confirmed == true) {
       await library.deleteBookPage(current);
@@ -185,10 +193,11 @@ class _PageDetailScreen extends StatelessWidget {
     final current = library
         .pagesFor(page.bookId)
         .firstWhere((p) => p.id == page.id, orElse: () => page);
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(current.pageLabel ?? 'Saved page'),
+        title: Text(current.pageLabel ?? t.savedPageFallbackTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_note_outlined),

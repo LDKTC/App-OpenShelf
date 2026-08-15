@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/book.dart';
 import '../models/book_metadata.dart';
 import '../services/ocr_service.dart';
@@ -171,7 +172,7 @@ class _BookEditScreenState extends State<BookEditScreen> {
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Text scan failed: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context).textScanFailed('$e'))),
         );
         return;
       }
@@ -191,9 +192,10 @@ class _BookEditScreenState extends State<BookEditScreen> {
   }
 
   Widget _scanButton(String fieldLabel, TextEditingController controller) {
+    final t = AppLocalizations.of(context);
     return IconButton(
       icon: const Icon(Icons.document_scanner_outlined),
-      tooltip: 'Scan $fieldLabel',
+      tooltip: t.scanFieldTooltip(fieldLabel),
       onPressed:
           _scanningField ? null : () => _scanIntoField(controller, fieldLabel),
     );
@@ -202,12 +204,13 @@ class _BookEditScreenState extends State<BookEditScreen> {
   @override
   Widget build(BuildContext context) {
     final library = context.watch<LibraryProvider>();
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditing ? 'Edit Book' : 'Add Book'),
+        title: Text(_isEditing ? t.editBookTitle : t.addBookTitle),
         actions: [
-          TextButton(onPressed: _save, child: const Text('Save')),
+          TextButton(onPressed: _save, child: Text(t.save)),
         ],
       ),
       body: Form(
@@ -225,33 +228,34 @@ class _BookEditScreenState extends State<BookEditScreen> {
             TextFormField(
               controller: _title,
               decoration: InputDecoration(
-                labelText: 'Title',
-                suffixIcon: _scanButton('Title', _title),
+                labelText: t.titleField,
+                suffixIcon: _scanButton(t.titleField, _title),
               ),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Title is required' : null,
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? t.titleRequiredError : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _authors,
               decoration: InputDecoration(
-                labelText: 'Authors (comma-separated)',
-                suffixIcon: _scanButton('Authors', _authors),
+                labelText: t.authorsField,
+                suffixIcon: _scanButton(t.authorsField, _authors),
               ),
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _illustrators,
               decoration: InputDecoration(
-                labelText: 'Illustrators (comma-separated)',
-                suffixIcon: _scanButton('Illustrators', _illustrators),
+                labelText: t.illustratorsField,
+                suffixIcon: _scanButton(t.illustratorsField, _illustrators),
               ),
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _isbn13,
               decoration: InputDecoration(
-                labelText: 'ISBN-13',
-                suffixIcon: _scanButton('ISBN-13', _isbn13),
+                labelText: t.isbn13Field,
+                suffixIcon: _scanButton(t.isbn13Field, _isbn13),
               ),
               keyboardType: TextInputType.number,
             ),
@@ -259,35 +263,35 @@ class _BookEditScreenState extends State<BookEditScreen> {
             TextFormField(
               controller: _publisher,
               decoration: InputDecoration(
-                labelText: 'Publisher',
-                suffixIcon: _scanButton('Publisher', _publisher),
+                labelText: t.publisherField,
+                suffixIcon: _scanButton(t.publisherField, _publisher),
               ),
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _publishedDate,
-              decoration: const InputDecoration(labelText: 'Published date'),
+              decoration: InputDecoration(labelText: t.publishedDateField),
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _pageCount,
-              decoration: const InputDecoration(labelText: 'Page count'),
+              decoration: InputDecoration(labelText: t.pageCountField),
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _description,
-              decoration: const InputDecoration(labelText: 'Description'),
+              decoration: InputDecoration(labelText: t.descriptionField),
               maxLines: 4,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _notes,
-              decoration: const InputDecoration(labelText: 'My notes'),
+              decoration: InputDecoration(labelText: t.myNotesField),
               maxLines: 3,
             ),
             const SizedBox(height: 16),
-            Text('Categories', style: Theme.of(context).textTheme.labelLarge),
+            Text(t.categoriesLabel, style: Theme.of(context).textTheme.labelLarge),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -345,8 +349,9 @@ class _OcrReviewDialogState extends State<_OcrReviewDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return AlertDialog(
-      title: Text('Review scanned ${widget.fieldLabel}'),
+      title: Text(t.reviewScannedTitle(widget.fieldLabel)),
       content: SizedBox(
         width: double.maxFinite,
         child: Column(
@@ -355,10 +360,8 @@ class _OcrReviewDialogState extends State<_OcrReviewDialog> {
           children: [
             Text(
               widget.recognizedText.isEmpty
-                  ? 'No text was recognized in the photo. You can type it '
-                      'in manually below, or cancel and try again.'
-                  : 'Edit if needed, then use this text to fill in '
-                      '${widget.fieldLabel}.',
+                  ? t.ocrNoTextRecognized
+                  : t.ocrEditAndFill(widget.fieldLabel),
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
@@ -375,11 +378,11 @@ class _OcrReviewDialogState extends State<_OcrReviewDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(t.cancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(_controller.text.trim()),
-          child: const Text('Use this text'),
+          child: Text(t.useThisTextLabel),
         ),
       ],
     );

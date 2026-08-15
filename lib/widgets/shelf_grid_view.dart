@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../services/settings_service.dart';
 import '../state/library_provider.dart';
 import 'book_shelf_tile.dart';
@@ -20,17 +21,24 @@ class ShelfGridView extends StatelessWidget {
     final mode = library.shelfDisplayMode;
 
     if (books.isEmpty) {
-      return const Center(child: Text('No books yet.'));
+      return Center(child: Text(AppLocalizations.of(context).noBooksYet));
     }
 
-    final isSpine = mode == ShelfDisplayMode.spine;
+    if (mode == ShelfDisplayMode.spine) {
+      return SpineShelfView(
+        books: books,
+        presetFor: (bookId) => library.activeCoverPresetFor(bookId),
+        onTapBook: onTapBook,
+      );
+    }
+
     return GridView.builder(
       padding: const EdgeInsets.all(12),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: isSpine ? 6 : 3,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
         mainAxisSpacing: 10,
         crossAxisSpacing: 10,
-        childAspectRatio: isSpine ? 0.22 : 0.68,
+        childAspectRatio: 0.68,
       ),
       itemCount: books.length,
       itemBuilder: (context, index) {

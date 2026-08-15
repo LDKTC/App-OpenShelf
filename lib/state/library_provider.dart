@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/book.dart';
 import '../models/book_page.dart';
 import '../models/category.dart';
@@ -17,12 +18,12 @@ enum CategoryFilter { all }
 enum LibraryStatusFilter { notStarted, reading, finished, dropped, paused }
 
 extension LibraryStatusFilterX on LibraryStatusFilter {
-  String get label => switch (this) {
-        LibraryStatusFilter.notStarted => 'Not started',
-        LibraryStatusFilter.reading => 'Reading',
-        LibraryStatusFilter.finished => 'Finished',
-        LibraryStatusFilter.dropped => 'Dropped',
-        LibraryStatusFilter.paused => 'Paused',
+  String label(AppLocalizations t) => switch (this) {
+        LibraryStatusFilter.notStarted => t.statusNotStarted,
+        LibraryStatusFilter.reading => t.statusReading,
+        LibraryStatusFilter.finished => t.statusFinished,
+        LibraryStatusFilter.dropped => t.statusDropped,
+        LibraryStatusFilter.paused => t.statusPaused,
       };
 
   /// The [StampType] a book's current stamp must have to match this
@@ -54,6 +55,7 @@ class LibraryProvider extends ChangeNotifier {
   Map<int, List<BookCoverPreset>> _coverPresetsByBook = {};
   Map<int, List<BookPage>> _pagesByBook = {};
   ShelfDisplayMode _shelfDisplayMode = ShelfDisplayMode.cover;
+  AppLocale _appLocale = AppLocale.system;
 
   String _searchQuery = '';
   LibraryStatusFilter? _statusFilter;
@@ -66,6 +68,7 @@ class LibraryProvider extends ChangeNotifier {
   int? get categoryFilterId => _categoryFilterId;
   bool get loading => _loading;
   ShelfDisplayMode get shelfDisplayMode => _shelfDisplayMode;
+  AppLocale get appLocale => _appLocale;
 
   List<int> categoryIdsFor(int bookId) =>
       List.unmodifiable(_bookCategoryLinks[bookId] ?? const []);
@@ -147,6 +150,7 @@ class LibraryProvider extends ChangeNotifier {
       (p) => p.bookId,
     );
     _shelfDisplayMode = await _settings.getShelfDisplayMode();
+    _appLocale = await _settings.getAppLocale();
     _loading = false;
     notifyListeners();
   }
@@ -181,6 +185,12 @@ class LibraryProvider extends ChangeNotifier {
     _shelfDisplayMode = mode;
     notifyListeners();
     await _settings.setShelfDisplayMode(mode);
+  }
+
+  Future<void> setAppLocale(AppLocale locale) async {
+    _appLocale = locale;
+    notifyListeners();
+    await _settings.setAppLocale(locale);
   }
 
   Future<Book?> findByIsbn(String isbn13) => _db.findByIsbn(isbn13);

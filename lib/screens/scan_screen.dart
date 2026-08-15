@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/book_metadata.dart';
 import '../services/book_lookup_service.dart';
 import '../services/isbn_utils.dart';
-import '../services/settings_service.dart';
 import '../state/library_provider.dart';
 import 'book_detail_screen.dart';
 import 'book_edit_screen.dart';
-import 'settings_screen.dart';
 
 /// What a detected ISBN does once resolved.
 enum ScanMode {
@@ -42,8 +41,6 @@ class _ScanScreenState extends State<ScanScreen> {
 
   bool _busy = false;
   String? _statusMessage;
-  String? _unmatchedIsbn13;
-  bool _showSettingsHint = false;
 
   // Only used in ScanMode.search: the scanned ISBN wasn't in the library,
   // so offer to add it instead (carrying over any metadata already found).
@@ -68,9 +65,7 @@ class _ScanScreenState extends State<ScanScreen> {
 
     setState(() {
       _busy = true;
-      _statusMessage = 'Looking up $raw...';
-      _showSettingsHint = false;
-      _unmatchedIsbn13 = null;
+      _statusMessage = AppLocalizations.of(context).lookingUpIsbn(raw);
       _searchMissIsbn13 = null;
       _searchMissMetadata = null;
     });
@@ -115,43 +110,16 @@ class _ScanScreenState extends State<ScanScreen> {
       _busy = false;
       _searchMissMetadata = metadata;
       _searchMissIsbn13 = isbn13;
-      _statusMessage = 'No book with ISBN $isbn13 in your library.';
+      _statusMessage = AppLocalizations.of(context).noBookWithIsbn(isbn13);
     });
   }
 
   Future<void> _handleAddNotFound(String isbn13) async {
-    if (IsbnUtils.isThaiIsbn(isbn13)) {
-      final sruUrl = await SettingsService.instance.getSruBaseUrl();
-      if (!mounted) return;
-      if (sruUrl == null || sruUrl.isEmpty) {
-        setState(() {
-          _busy = false;
-          _unmatchedIsbn13 = isbn13;
-          _showSettingsHint = true;
-          _statusMessage = 'No metadata found for $isbn13. This is a Thai '
-              'ISBN, and the National Library of Thailand lookup isn\'t '
-              'set up yet — configure it in Settings for better results, '
-              'or add this book manually.';
-        });
-        return;
-      }
-    }
     setState(() {
-      _statusMessage =
-          'No metadata found for $isbn13. You can still add it manually.';
+      _statusMessage = AppLocalizations.of(context).noMetadataAddManually(isbn13);
     });
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => BookEditScreen(prefillIsbn13: isbn13),
-      ),
-    );
-  }
-
-  void _addUnmatchedManually() {
-    final isbn13 = _unmatchedIsbn13;
-    if (isbn13 == null) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (_) => BookEditScreen(prefillIsbn13: isbn13),
@@ -183,24 +151,12 @@ class _ScanScreenState extends State<ScanScreen> {
     await _controller.start();
   }
 
-  Future<void> _openSettings() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const SettingsScreen()),
-    );
-    if (!mounted) return;
-    setState(() {
-      _showSettingsHint = false;
-      _statusMessage = null;
-      _unmatchedIsbn13 = null;
-    });
-    await _controller.start();
-  }
-
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isSearch ? 'Scan to search' : 'Scan ISBN'),
+        title: Text(_isSearch ? t.scanToSearchTitle : t.scanIsbnTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.flash_on),
@@ -240,23 +196,6 @@ class _ScanScreenState extends State<ScanScreen> {
                           Expanded(child: Text(_statusMessage!)),
                         ],
                       ),
-                      if (_showSettingsHint) ...[
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            TextButton(
-                              onPressed: _addUnmatchedManually,
-                              child: const Text('Add manually'),
-                            ),
-                            const SizedBox(width: 8),
-                            FilledButton(
-                              onPressed: _openSettings,
-                              child: const Text('Open Settings'),
-                            ),
-                          ],
-                        ),
-                      ],
                       if (_searchMissIsbn13 != null) ...[
                         const SizedBox(height: 12),
                         Row(
@@ -264,12 +203,12 @@ class _ScanScreenState extends State<ScanScreen> {
                           children: [
                             TextButton(
                               onPressed: _scanAgain,
-                              child: const Text('Scan again'),
+                              child: Text(t.scanAgain),
                             ),
                             const SizedBox(width: 8),
                             FilledButton(
                               onPressed: _addSearchMissToLibrary,
-                              child: const Text('Add to library'),
+                              child: Text(t.addToLibrary),
                             ),
                           ],
                         ),
@@ -288,9 +227,7 @@ class _ScanScreenState extends State<ScanScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Text(
-                    _isSearch
-                        ? 'Scan a book already on your shelf to jump to it.'
-                        : 'Point the camera at the barcode on the back of the book.',
+                    _isSearch ? t.scanToSearchHint : t.scanIsbnHint,
                     textAlign: TextAlign.center,
                   ),
                 ),

@@ -13,7 +13,7 @@ class BookMetadata {
   final String? language;
 
   /// Which provider resolved this record, e.g. 'google_books',
-  /// 'open_library', 'nlt_alma_sru'.
+  /// 'open_library'.
   final String source;
 
   const BookMetadata({
