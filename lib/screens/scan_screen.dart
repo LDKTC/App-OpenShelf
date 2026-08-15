@@ -5,9 +5,11 @@ import 'package:provider/provider.dart';
 import '../models/book_metadata.dart';
 import '../services/book_metadata_service.dart';
 import '../services/isbn_utils.dart';
+import '../services/settings_service.dart';
 import '../state/library_provider.dart';
 import 'book_detail_screen.dart';
 import 'book_edit_screen.dart';
+import 'settings_screen.dart';
 
 /// Camera view that scans a barcode, validates it as an ISBN, looks up
 /// its metadata, and hands off to [BookEditScreen] for the user to
@@ -27,6 +29,8 @@ class _ScanScreenState extends State<ScanScreen> {
 
   bool _busy = false;
   String? _statusMessage;
+  String? _unmatchedIsbn13;
+  bool _showSettingsHint = false;
 
   @override
   void dispose() {
@@ -70,6 +74,22 @@ class _ScanScreenState extends State<ScanScreen> {
     if (!mounted) return;
 
     if (metadata == null) {
+      if (IsbnUtils.isThaiIsbn(isbn13)) {
+        final sruUrl = await SettingsService.instance.getSruBaseUrl();
+        if (!mounted) return;
+        if (sruUrl == null || sruUrl.isEmpty) {
+          setState(() {
+            _busy = false;
+            _unmatchedIsbn13 = isbn13;
+            _showSettingsHint = true;
+            _statusMessage = 'No metadata found for $isbn13. This is a Thai '
+                'ISBN, and the National Library of Thailand lookup isn\'t '
+                'set up yet — configure it in Settings for better results, '
+                'or add this book manually.';
+          });
+          return;
+        }
+      }
       setState(() {
         _statusMessage =
             'No metadata found for $isbn13. You can still add it manually.';
@@ -89,6 +109,29 @@ class _ScanScreenState extends State<ScanScreen> {
         builder: (_) => BookEditScreen(metadata: metadata),
       ),
     );
+  }
+
+  void _addUnmatchedManually() {
+    final isbn13 = _unmatchedIsbn13;
+    if (isbn13 == null) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => BookEditScreen(prefillIsbn13: isbn13),
+      ),
+    );
+  }
+
+  Future<void> _openSettings() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+    );
+    if (!mounted) return;
+    setState(() {
+      _showSettingsHint = false;
+      _statusMessage = null;
+      _unmatchedIsbn13 = null;
+    });
+    await _controller.start();
   }
 
   @override
@@ -116,18 +159,42 @@ class _ScanScreenState extends State<ScanScreen> {
               child: Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Row(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (_busy)
-                        const Padding(
-                          padding: EdgeInsets.only(right: 12),
-                          child: SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
+                      Row(
+                        children: [
+                          if (_busy)
+                            const Padding(
+                              padding: EdgeInsets.only(right: 12),
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            ),
+                          Expanded(child: Text(_statusMessage!)),
+                        ],
+                      ),
+                      if (_showSettingsHint) ...[
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: _addUnmatchedManually,
+                              child: const Text('Add manually'),
+                            ),
+                            const SizedBox(width: 8),
+                            FilledButton(
+                              onPressed: _openSettings,
+                              child: const Text('Open Settings'),
+                            ),
+                          ],
                         ),
-                      Expanded(child: Text(_statusMessage!)),
+                      ],
                     ],
                   ),
                 ),

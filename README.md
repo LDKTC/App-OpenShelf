@@ -106,7 +106,10 @@ you configure it. To set it up:
    returns a well-formed SRU response.
 
 If left unset, or if a request to it fails, the app silently falls back to
-Google Books and Open Library — Thai lookups just won't be as complete.
+Google Books and Open Library — Thai lookups just won't be as complete. If a
+scanned Thai ISBN (978-616 / 978-974) has no match anywhere and the SRU URL
+isn't configured yet, the Scan screen says so explicitly and offers a button
+straight to Settings, instead of just reporting a generic "not found".
 
 ## Notes on this environment
 
