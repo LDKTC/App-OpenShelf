@@ -9,7 +9,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../models/app_update_info.dart';
 import 'apk_installer.dart';
 
-/// Checks GitHub Releases for a newer OpenShelf build and, when the user
+/// Checks GitHub Releases for a newer QuetzaLib build and, when the user
 /// opts in, downloads the APK and hands it to the system installer — the
 /// standard way to update a sideloaded Android app that isn't distributed
 /// through the Play Store.
@@ -17,7 +17,7 @@ class UpdateService {
   UpdateService({http.Client? client}) : _client = client ?? http.Client();
 
   static const _releasesUrl =
-      'https://api.github.com/repos/LDKTC/App-OpenShelf/releases/latest';
+      'https://api.github.com/repos/LDKTC/App-QuetzaLib/releases/latest';
 
   final http.Client _client;
 
@@ -84,7 +84,7 @@ class UpdateService {
     final total = response.contentLength ?? update.apkSizeBytes;
     final dir = Directory('${(await getTemporaryDirectory()).path}/updates');
     await dir.create(recursive: true);
-    final file = File('${dir.path}/openshelf-${update.version}.apk');
+    final file = File('${dir.path}/quetzalib-${update.version}.apk');
 
     var received = 0;
     final sink = file.openWrite();
@@ -109,8 +109,8 @@ class UpdateService {
     }
     if (!status.isGranted) {
       throw Exception(
-        'OpenShelf needs permission to install updates. Allow '
-        '"Install unknown apps" for OpenShelf in system settings, then '
+        'QuetzaLib needs permission to install updates. Allow '
+        '"Install unknown apps" for QuetzaLib in system settings, then '
         'try again.',
       );
     }

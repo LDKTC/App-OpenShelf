@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../models/book.dart';
 import '../models/book_metadata.dart';
-import '../models/read_status.dart';
 import '../state/library_provider.dart';
 import 'book_detail_screen.dart';
 
@@ -39,7 +38,6 @@ class _BookEditScreenState extends State<BookEditScreen> {
   late final TextEditingController _pageCount;
   late final TextEditingController _notes;
 
-  ReadStatus _status = ReadStatus.unread;
   String? _thumbnailUrl;
   Set<int> _selectedCategoryIds = {};
 
@@ -67,7 +65,6 @@ class _BookEditScreenState extends State<BookEditScreen> {
       text: (book?.pageCount ?? metadata?.pageCount)?.toString() ?? '',
     );
     _notes = TextEditingController(text: book?.notes ?? '');
-    _status = book?.status ?? ReadStatus.unread;
     _thumbnailUrl = book?.thumbnailUrl ?? metadata?.thumbnailUrl;
 
     if (book != null) {
@@ -114,12 +111,9 @@ class _BookEditScreenState extends State<BookEditScreen> {
       pageCount: int.tryParse(_pageCount.text.trim()),
       thumbnailUrl: _thumbnailUrl,
       language: widget.existingBook?.language ?? widget.metadata?.language,
-      status: _status,
       notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
       source: widget.existingBook?.source ?? widget.metadata?.source ?? 'manual',
       dateAdded: widget.existingBook?.dateAdded ?? DateTime.now(),
-      dateStarted: widget.existingBook?.dateStarted,
-      dateFinished: widget.existingBook?.dateFinished,
     );
 
     int bookId;
@@ -202,17 +196,6 @@ class _BookEditScreenState extends State<BookEditScreen> {
               controller: _notes,
               decoration: const InputDecoration(labelText: 'My notes'),
               maxLines: 3,
-            ),
-            const SizedBox(height: 16),
-            Text('Reading status', style: Theme.of(context).textTheme.labelLarge),
-            const SizedBox(height: 8),
-            SegmentedButton<ReadStatus>(
-              segments: [
-                for (final status in ReadStatus.values)
-                  ButtonSegment(value: status, label: Text(status.label)),
-              ],
-              selected: {_status},
-              onSelectionChanged: (s) => setState(() => _status = s.first),
             ),
             const SizedBox(height: 16),
             Text('Categories', style: Theme.of(context).textTheme.labelLarge),

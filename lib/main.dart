@@ -6,18 +6,18 @@ import 'state/library_provider.dart';
 import 'theme.dart';
 
 void main() {
-  runApp(const OpenShelfApp());
+  runApp(const QuetzaLibApp());
 }
 
-class OpenShelfApp extends StatelessWidget {
-  const OpenShelfApp({super.key});
+class QuetzaLibApp extends StatelessWidget {
+  const QuetzaLibApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => LibraryProvider()..loadAll(),
       child: MaterialApp(
-        title: 'OpenShelf',
+        title: 'QuetzaLib',
         theme: buildAppTheme(),
         home: const HomeScreen(),
       ),

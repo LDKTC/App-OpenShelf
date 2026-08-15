@@ -1,4 +1,4 @@
-# OpenShelf
+# QuetzaLib
 
 Android app (Flutter, built as an `.apk`) that scans the ISBN barcode on
 the back of a book, looks up its metadata, and adds it to your personal
@@ -21,13 +21,30 @@ library, stored locally on-device in SQLite.
     specialized fallback. Its [public API](https://ranobedb.org/api/docs/v0)
     has no direct ISBN search, so this is best-effort — see the note in
     `ranobedb_provider.dart`.
+- **Add by ISBN text entry**: type or paste an ISBN-10/13 instead of
+  scanning, via the same lookup flow as the barcode scanner.
 - **Manual add/edit**: for books with no barcode or no metadata match.
-- **Library management**: categorize books (custom categories you define),
-  search/filter by title, author or ISBN, and track reading status
-  (Unread / Reading / Read).
+- **Search the shelf by scan**: scan a book already in your library to jump
+  straight to it, in addition to the free-text search.
+- **Cover/spine scanning**: scan a book's front cover, spine, and back
+  cover into a reusable preset (a book can have several; one is active at
+  a time) from the book detail screen, or promote its existing API
+  thumbnail into a preset instead of rescanning it. Presets can be edited
+  afterward — skip a slot now and scan it in later.
+- **Saved pages**: photograph a page or illustration inside a book and
+  keep it as an in-app reminder, with an optional label and note.
+- **Reading-status stamps**: a timeline of `reading` / `finished` /
+  `dropped` / `paused` stamps per book instead of a single status field —
+  add, edit, or delete a stamp at any time; a book's current status is
+  just its most recent stamp.
+- **Shelf view**: browse the library as a visual shelf of spines or covers
+  (a global List/Shelf and spine/cover toggle), falling back to a text
+  info tile for books with no scanned cover yet.
+- **Library management**: categorize books (custom categories you define)
+  and search/filter by title, author, ISBN, or reading-status stamp.
 - **Fully local**: all data lives in an on-device SQLite database
   (via `sqflite`) — nothing is synced anywhere.
-- **In-app updates**: since OpenShelf isn't distributed through the Play
+- **In-app updates**: since QuetzaLib isn't distributed through the Play
   Store, **Settings → App update** checks GitHub Releases for a newer
   build and installs it over the existing app — see [App updates](#app-updates)
   below.
@@ -38,6 +55,7 @@ library, stored locally on-device in SQLite.
 - `sqflite` for local storage
 - `mobile_scanner` for barcode scanning + `permission_handler` for the
   camera permission
+- `image_picker` for cover/spine/page photo capture
 - `provider` for state management
 - `http` + `xml` for metadata lookups (Google Books JSON, Open Library
   JSON, NLT Alma MARCXML-over-SRU)
@@ -48,17 +66,21 @@ library, stored locally on-device in SQLite.
 
 ```
 lib/
-  models/            Book, BookCategory, ReadStatus, BookMetadata, AppUpdateInfo
+  models/            Book, BookCategory, ReadingStamp, BookCoverPreset, BookPage,
+                      BookMetadata, AppUpdateInfo
   services/
     database_service.dart       sqflite schema + CRUD
     isbn_utils.dart             ISBN validation/normalization, Thai-ISBN detection
-    settings_service.dart       persisted app settings (NLT SRU URL)
+    settings_service.dart       persisted app settings (NLT SRU URL, shelf display mode)
     book_metadata_service.dart  orchestrates provider lookup order
+    book_lookup_service.dart    shared ISBN -> existing book/metadata/not-found resolution
     metadata_providers/         google_books, open_library, nlt_alma_sru, ranobedb
+    image_storage_service.dart  persists scanned cover/page photos on-device
     update_service.dart         checks GitHub Releases, downloads + installs the APK
     apk_installer.dart          platform channel to the native install-APK intent
   state/library_provider.dart   app state (ChangeNotifier) wrapping the DB
-  screens/                      library list, scan, book detail/edit, categories, settings
+  screens/                      library list/shelf, scan, book detail/edit, cover/page
+                                 scanning, ISBN entry, categories, settings
   widgets/                      shared UI pieces
 ```
 
@@ -85,10 +107,10 @@ there.
 ### Release builds
 
 `.github/workflows/release.yml` builds a release `.apk` and publishes it
-as a (pre-release) GitHub Release with the APK attached, either:
+as a GitHub Release with the APK attached, either:
 
-- automatically, on pushing a tag matching `v*.*.*` (e.g. `git tag
-  v0.1.0-prototype && git push origin v0.1.0-prototype`), or
+- automatically, on pushing a tag matching `v*.*.*` (e.g. `git tag v1.0.0
+  && git push origin v1.0.0`), or
 - manually, via the "Run workflow" button on the Release workflow in the
   Actions tab, entering a tag name.
 
@@ -125,12 +147,12 @@ straight to Settings, instead of just reporting a generic "not found".
 
 ## App updates
 
-OpenShelf isn't distributed through the Play Store, so it can't rely on
+QuetzaLib isn't distributed through the Play Store, so it can't rely on
 Play's automatic update mechanism. Instead, **Settings → App update** lets
 an existing install update itself in place:
 
 1. Tap **Check for updates**. The app queries the GitHub Releases API
-   (`/repos/LDKTC/App-OpenShelf/releases/latest`, published by
+   (`/repos/LDKTC/App-QuetzaLib/releases/latest`, published by
    `.github/workflows/release.yml`) and compares its `tag_name` against
    the running app's version (`PackageInfo`/`pubspec.yaml`).
 2. If a newer release has an `.apk` asset attached, tap **Download &
@@ -140,7 +162,7 @@ an existing install update itself in place:
    `application/vnd.android.package-archive` intent (see `MainActivity.kt`
    and `android:name="android.permission.REQUEST_INSTALL_PACKAGES"` in
    `AndroidManifest.xml`).
-3. The OS will prompt to allow "install unknown apps" for OpenShelf the
+3. The OS will prompt to allow "install unknown apps" for QuetzaLib the
    first time (Android's standard sideload-install flow), then shows the
    normal package-installer confirmation screen. Installing over the
    existing app keeps your local library/settings intact, same as any

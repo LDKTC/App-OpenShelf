@@ -184,7 +184,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'OpenShelf isn\'t distributed through the Play Store, so '
+                  'QuetzaLib isn\'t distributed through the Play Store, so '
                   'updates are installed the same way as the first install: '
                   'downloading the latest APK and installing it over this '
                   'app. Your books and settings are kept.',

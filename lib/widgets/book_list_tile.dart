@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 
 import '../models/book.dart';
+import '../models/stamp.dart';
 import 'status_chip.dart';
 
 class BookListTile extends StatelessWidget {
-  const BookListTile({super.key, required this.book, required this.onTap});
+  const BookListTile({
+    super.key,
+    required this.book,
+    required this.currentStatus,
+    required this.onTap,
+  });
 
   final Book book;
+  final StampType? currentStatus;
   final VoidCallback onTap;
 
   @override
@@ -32,7 +39,7 @@ class BookListTile extends StatelessWidget {
       ),
       title: Text(book.title, maxLines: 2, overflow: TextOverflow.ellipsis),
       subtitle: Text(book.authorsDisplay, maxLines: 1, overflow: TextOverflow.ellipsis),
-      trailing: StatusChip(status: book.status),
+      trailing: StatusChip(currentType: currentStatus),
     );
   }
 }

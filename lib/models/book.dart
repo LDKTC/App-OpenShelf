@@ -1,5 +1,3 @@
-import 'read_status.dart';
-
 class Book {
   final int? id;
   final String? isbn13;
@@ -12,13 +10,10 @@ class Book {
   final int? pageCount;
   final String? thumbnailUrl;
   final String? language;
-  final ReadStatus status;
   final int? rating;
   final String? notes;
   final String? source;
   final DateTime dateAdded;
-  final DateTime? dateStarted;
-  final DateTime? dateFinished;
 
   const Book({
     this.id,
@@ -32,13 +27,10 @@ class Book {
     this.pageCount,
     this.thumbnailUrl,
     this.language,
-    this.status = ReadStatus.unread,
     this.rating,
     this.notes,
     this.source,
     required this.dateAdded,
-    this.dateStarted,
-    this.dateFinished,
   });
 
   String get authorsDisplay =>
@@ -56,15 +48,10 @@ class Book {
     int? pageCount,
     String? thumbnailUrl,
     String? language,
-    ReadStatus? status,
     int? rating,
     String? notes,
     String? source,
     DateTime? dateAdded,
-    DateTime? dateStarted,
-    DateTime? dateFinished,
-    bool clearDateStarted = false,
-    bool clearDateFinished = false,
   }) {
     return Book(
       id: id ?? this.id,
@@ -78,15 +65,10 @@ class Book {
       pageCount: pageCount ?? this.pageCount,
       thumbnailUrl: thumbnailUrl ?? this.thumbnailUrl,
       language: language ?? this.language,
-      status: status ?? this.status,
       rating: rating ?? this.rating,
       notes: notes ?? this.notes,
       source: source ?? this.source,
       dateAdded: dateAdded ?? this.dateAdded,
-      dateStarted:
-          clearDateStarted ? null : (dateStarted ?? this.dateStarted),
-      dateFinished:
-          clearDateFinished ? null : (dateFinished ?? this.dateFinished),
     );
   }
 
@@ -103,13 +85,10 @@ class Book {
       'pageCount': pageCount,
       'thumbnailUrl': thumbnailUrl,
       'language': language,
-      'status': status.storageValue,
       'rating': rating,
       'notes': notes,
       'source': source,
       'dateAdded': dateAdded.toIso8601String(),
-      'dateStarted': dateStarted?.toIso8601String(),
-      'dateFinished': dateFinished?.toIso8601String(),
     };
   }
 
@@ -129,17 +108,10 @@ class Book {
       pageCount: map['pageCount'] as int?,
       thumbnailUrl: map['thumbnailUrl'] as String?,
       language: map['language'] as String?,
-      status: ReadStatusX.fromStorage(map['status'] as String?),
       rating: map['rating'] as int?,
       notes: map['notes'] as String?,
       source: map['source'] as String?,
       dateAdded: DateTime.parse(map['dateAdded'] as String),
-      dateStarted: map['dateStarted'] == null
-          ? null
-          : DateTime.parse(map['dateStarted'] as String),
-      dateFinished: map['dateFinished'] == null
-          ? null
-          : DateTime.parse(map['dateFinished'] as String),
     );
   }
 }
