@@ -12,9 +12,9 @@ library, stored locally on-device in SQLite.
   - Books: [Google Books API](https://developers.google.com/books) first,
     falling back to [Open Library](https://openlibrary.org/dev/docs/api/books).
   - Light novels: [RanobeDB](https://ranobedb.org) is tried last as a
-    specialized fallback. Its [public API](https://ranobedb.org/api/docs/v0)
-    has no direct ISBN search, so this is best-effort — see the note in
-    `ranobedb_provider.dart`.
+    specialized fallback, since most scanned books aren't light novels — see
+    the note in `ranobedb_provider.dart` for how its
+    [public API](https://ranobedb.org/api/docs/v0) resolves an ISBN-13.
 - **Add by ISBN text entry**: type or paste an ISBN-10/13 instead of
   scanning, via the same lookup flow as the barcode scanner.
 - **Manual add/edit**: for books with no barcode or no metadata match.

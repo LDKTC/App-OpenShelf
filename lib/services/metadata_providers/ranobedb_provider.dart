@@ -8,14 +8,16 @@ import '../../models/book_metadata.dart';
 /// via its public read-only API (https://ranobedb.org/api/v0, documented
 /// at https://ranobedb.org/api/docs/v0).
 ///
-/// RanobeDB's API has no dedicated ISBN search — `GET /books` only takes
-/// a free-text `q` parameter (title/alias search). This sends the ISBN as
-/// that query text, then only accepts a candidate whose release list
-/// (fetched via `GET /book/{id}`) actually contains the queried ISBN-13,
-/// so a fuzzy/irrelevant title match never gets returned as a hit. Since
-/// most scanned books aren't light novels, this rarely matches — that's
-/// expected, and callers already treat a null result as "try the next
-/// provider".
+/// `GET /releases` matches its `q` parameter against `release.isbn13`
+/// exactly whenever `q` looks like an ISBN-13 (starts with "978"/"979"),
+/// so a scanned ISBN resolves directly to the matching release instead of
+/// a fuzzy title search. From that release, `GET /release/{id}` gives the
+/// associated book id, and `GET /book/{id}` gives the full metadata
+/// (authors, description, cover) used to build a [BookMetadata]. The
+/// book's own release list is still checked against the queried ISBN-13
+/// as a final guard. Since most scanned books aren't light novels, this
+/// rarely matches — that's expected, and callers already treat a null
+/// result as "try the next provider".
 class RanobeDbProvider {
   RanobeDbProvider({http.Client? client}) : _client = client ?? http.Client();
 
@@ -25,7 +27,33 @@ class RanobeDbProvider {
   final http.Client _client;
 
   Future<BookMetadata?> lookup(String isbn13) async {
-    final searchUri = Uri.parse('$_endpoint/books').replace(
+    final releaseId = await _findReleaseId(isbn13);
+    if (releaseId == null) return null;
+
+    final bookId = await _findBookId(releaseId);
+    if (bookId == null) return null;
+
+    final detailUri = Uri.parse('$_endpoint/book/$bookId');
+    final detailResponse = await _client
+        .get(detailUri)
+        .timeout(const Duration(seconds: 10));
+    if (detailResponse.statusCode != 200) return null;
+
+    final book = (jsonDecode(detailResponse.body)
+        as Map<String, dynamic>)['book'] as Map<String, dynamic>?;
+    if (book == null) return null;
+
+    final releases = book['releases'] as List<dynamic>? ?? [];
+    final isMatch = releases.any(
+      (r) => (r as Map<String, dynamic>)['isbn13'] == isbn13,
+    );
+    if (!isMatch) return null;
+
+    return _toMetadata(book, isbn13);
+  }
+
+  Future<int?> _findReleaseId(String isbn13) async {
+    final searchUri = Uri.parse('$_endpoint/releases').replace(
       queryParameters: {'q': isbn13, 'limit': '5'},
     );
     final searchResponse = await _client
@@ -35,32 +63,28 @@ class RanobeDbProvider {
 
     final searchBody =
         jsonDecode(searchResponse.body) as Map<String, dynamic>;
-    final candidates = searchBody['books'] as List<dynamic>? ?? [];
+    final releases = searchBody['releases'] as List<dynamic>? ?? [];
 
-    for (final candidate in candidates) {
-      final id = (candidate as Map<String, dynamic>)['id'];
-      if (id == null) continue;
-
-      final detailUri = Uri.parse('$_endpoint/book/$id');
-      final detailResponse = await _client
-          .get(detailUri)
-          .timeout(const Duration(seconds: 10));
-      if (detailResponse.statusCode != 200) continue;
-
-      final book = (jsonDecode(detailResponse.body)
-          as Map<String, dynamic>)['book'] as Map<String, dynamic>?;
-      if (book == null) continue;
-
-      final releases = book['releases'] as List<dynamic>? ?? [];
-      final isMatch = releases.any(
-        (r) => (r as Map<String, dynamic>)['isbn13'] == isbn13,
-      );
-      if (!isMatch) continue;
-
-      final metadata = _toMetadata(book, isbn13);
-      if (metadata != null) return metadata;
+    for (final release in releases) {
+      final map = release as Map<String, dynamic>;
+      if (map['isbn13'] == isbn13) return map['id'] as int?;
     }
     return null;
+  }
+
+  Future<int?> _findBookId(int releaseId) async {
+    final releaseUri = Uri.parse('$_endpoint/release/$releaseId');
+    final releaseResponse = await _client
+        .get(releaseUri)
+        .timeout(const Duration(seconds: 10));
+    if (releaseResponse.statusCode != 200) return null;
+
+    final release = (jsonDecode(releaseResponse.body)
+        as Map<String, dynamic>)['release'] as Map<String, dynamic>?;
+    final books = release?['books'] as List<dynamic>? ?? [];
+    if (books.isEmpty) return null;
+
+    return (books.first as Map<String, dynamic>)['id'] as int?;
   }
 
   BookMetadata? _toMetadata(Map<String, dynamic> book, String isbn13) {

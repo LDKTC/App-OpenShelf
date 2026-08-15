@@ -12,15 +12,24 @@ void main() {
   group('RanobeDbProvider', () {
     const isbn13 = '9781638586301';
 
-    test('returns metadata when a candidate release matches the ISBN',
+    test('returns metadata when the release search matches the ISBN',
         () async {
       final client = MockClient((request) async {
-        if (request.url.path == '/api/v0/books') {
+        if (request.url.path == '/api/v0/releases') {
           expect(request.url.queryParameters['q'], isbn13);
           return _json({
-            'books': [
-              {'id': 42},
+            'releases': [
+              {'id': 7, 'isbn13': isbn13},
             ],
+          });
+        }
+        if (request.url.path == '/api/v0/release/7') {
+          return _json({
+            'release': {
+              'books': [
+                {'id': 42},
+              ],
+            },
           });
         }
         if (request.url.path == '/api/v0/book/42') {
@@ -64,35 +73,13 @@ void main() {
       expect(result.source, 'ranobedb');
     });
 
-    test('skips candidates whose releases do not contain the ISBN',
-        () async {
+    test('ignores a release result whose ISBN does not match', () async {
       final client = MockClient((request) async {
-        if (request.url.path == '/api/v0/books') {
+        if (request.url.path == '/api/v0/releases') {
           return _json({
-            'books': [
-              {'id': 1},
-              {'id': 2},
+            'releases': [
+              {'id': 7, 'isbn13': '9780000000000'},
             ],
-          });
-        }
-        if (request.url.path == '/api/v0/book/1') {
-          return _json({
-            'book': {
-              'title': 'Wrong Match',
-              'releases': [
-                {'isbn13': '9780000000000'},
-              ],
-            },
-          });
-        }
-        if (request.url.path == '/api/v0/book/2') {
-          return _json({
-            'book': {
-              'title': 'Right Match',
-              'releases': [
-                {'isbn13': isbn13},
-              ],
-            },
           });
         }
         return http.Response('not found', 404);
@@ -100,17 +87,26 @@ void main() {
 
       final result = await RanobeDbProvider(client: client).lookup(isbn13);
 
-      expect(result, isNotNull);
-      expect(result!.title, 'Right Match');
+      expect(result, isNull);
     });
 
-    test('returns null when no candidate matches the ISBN', () async {
+    test('returns null when the book detail lacks the queried ISBN',
+        () async {
       final client = MockClient((request) async {
-        if (request.url.path == '/api/v0/books') {
+        if (request.url.path == '/api/v0/releases') {
           return _json({
-            'books': [
-              {'id': 1},
+            'releases': [
+              {'id': 7, 'isbn13': isbn13},
             ],
+          });
+        }
+        if (request.url.path == '/api/v0/release/7') {
+          return _json({
+            'release': {
+              'books': [
+                {'id': 42},
+              ],
+            },
           });
         }
         return _json({
@@ -128,10 +124,9 @@ void main() {
       expect(result, isNull);
     });
 
-    test('returns null when the search response has no candidates',
-        () async {
+    test('returns null when the release search has no matches', () async {
       final client = MockClient((request) async {
-        return _json({'books': []});
+        return _json({'releases': []});
       });
 
       final result = await RanobeDbProvider(client: client).lookup(isbn13);
@@ -139,7 +134,7 @@ void main() {
       expect(result, isNull);
     });
 
-    test('returns null when the search request fails', () async {
+    test('returns null when the release search request fails', () async {
       final client = MockClient((request) async {
         return http.Response('server error', 500);
       });
@@ -149,34 +144,69 @@ void main() {
       expect(result, isNull);
     });
 
-    test('skips a candidate whose detail request fails and tries the next',
-        () async {
+    test('returns null when the release detail request fails', () async {
       final client = MockClient((request) async {
-        if (request.url.path == '/api/v0/books') {
+        if (request.url.path == '/api/v0/releases') {
           return _json({
-            'books': [
-              {'id': 1},
-              {'id': 2},
+            'releases': [
+              {'id': 7, 'isbn13': isbn13},
             ],
           });
         }
-        if (request.url.path == '/api/v0/book/1') {
-          return http.Response('server error', 500);
-        }
-        return _json({
-          'book': {
-            'title': 'Recovered Match',
-            'releases': [
-              {'isbn13': isbn13},
-            ],
-          },
-        });
+        return http.Response('server error', 500);
       });
 
       final result = await RanobeDbProvider(client: client).lookup(isbn13);
 
-      expect(result, isNotNull);
-      expect(result!.title, 'Recovered Match');
+      expect(result, isNull);
+    });
+
+    test('returns null when the release has no associated book', () async {
+      final client = MockClient((request) async {
+        if (request.url.path == '/api/v0/releases') {
+          return _json({
+            'releases': [
+              {'id': 7, 'isbn13': isbn13},
+            ],
+          });
+        }
+        if (request.url.path == '/api/v0/release/7') {
+          return _json({
+            'release': {'books': []},
+          });
+        }
+        return http.Response('not found', 404);
+      });
+
+      final result = await RanobeDbProvider(client: client).lookup(isbn13);
+
+      expect(result, isNull);
+    });
+
+    test('returns null when the book detail request fails', () async {
+      final client = MockClient((request) async {
+        if (request.url.path == '/api/v0/releases') {
+          return _json({
+            'releases': [
+              {'id': 7, 'isbn13': isbn13},
+            ],
+          });
+        }
+        if (request.url.path == '/api/v0/release/7') {
+          return _json({
+            'release': {
+              'books': [
+                {'id': 42},
+              ],
+            },
+          });
+        }
+        return http.Response('server error', 500);
+      });
+
+      final result = await RanobeDbProvider(client: client).lookup(isbn13);
+
+      expect(result, isNull);
     });
   });
 }
