@@ -101,7 +101,7 @@ class UpdateService {
   }
 
   /// Requests the "install unknown apps" permission if needed, then hands
-  /// [apk] to the system package installer.
+  /// [apk] to the system package installer and waits for the final result.
   Future<void> install(File apk) async {
     var status = await Permission.requestInstallPackages.status;
     if (!status.isGranted) {
@@ -114,7 +114,21 @@ class UpdateService {
         'try again.',
       );
     }
-    await ApkInstaller.install(apk.path);
+    final result = await ApkInstaller.install(apk.path);
+    switch (result.outcome) {
+      case InstallOutcome.success:
+        return;
+      case InstallOutcome.conflict:
+        throw Exception(
+          'This update is signed differently than the app already on this '
+          'device, so Android won\'t install it over the existing app. '
+          'Uninstall QuetzaLib first, then install this update -- note '
+          'that uninstalling erases your local library, since it isn\'t '
+          'backed up anywhere else.',
+        );
+      case InstallOutcome.failure:
+        throw Exception(result.message ?? 'Install was not completed.');
+    }
   }
 
   /// True if dotted version [a] is greater than [b]. A trailing `-suffix`
