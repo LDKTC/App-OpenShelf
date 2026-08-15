@@ -17,6 +17,10 @@ library, stored locally on-device in SQLite.
     far more complete there than in the international catalogs. See
     [NLT SRU configuration](#nlt-sru-configuration) below — this needs a
     one-time setup step.
+  - Light novels: [RanobeDB](https://ranobedb.org) is tried last as a
+    specialized fallback. Its [public API](https://ranobedb.org/api/docs/v0)
+    has no direct ISBN search, so this is best-effort — see the note in
+    `ranobedb_provider.dart`.
 - **Manual add/edit**: for books with no barcode or no metadata match.
 - **Library management**: categorize books (custom categories you define),
   search/filter by title, author or ISBN, and track reading status
@@ -50,7 +54,7 @@ lib/
     isbn_utils.dart             ISBN validation/normalization, Thai-ISBN detection
     settings_service.dart       persisted app settings (NLT SRU URL)
     book_metadata_service.dart  orchestrates provider lookup order
-    metadata_providers/         google_books, open_library, nlt_alma_sru
+    metadata_providers/         google_books, open_library, nlt_alma_sru, ranobedb
     update_service.dart         checks GitHub Releases, downloads + installs the APK
     apk_installer.dart          platform channel to the native install-APK intent
   state/library_provider.dart   app state (ChangeNotifier) wrapping the DB
