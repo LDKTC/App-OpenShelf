@@ -42,3 +42,9 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // For the FileProvider used to hand a downloaded update APK to the
+    // system package installer (see MainActivity.kt).
+    implementation("androidx.core:core-ktx:1.13.1")
+}
