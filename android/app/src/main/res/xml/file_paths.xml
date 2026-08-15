@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Exposes the app's private cache/updates folder to the system package
-     installer via a content:// URI, so a downloaded update APK can be
-     installed without granting broader file access. -->
-<paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <cache-path name="updates" path="updates/"/>
-</paths>

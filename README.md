@@ -172,16 +172,22 @@ an existing install update itself in place:
    the running app's version (`PackageInfo`/`pubspec.yaml`).
 2. If a newer release has an `.apk` asset attached, tap **Download &
    install**. The APK is downloaded to the app's private cache
-   (`<cache>/updates/`), then handed to Android's system package installer
-   via a `FileProvider` content URI and the `android.permission.VIEW`
-   `application/vnd.android.package-archive` intent (see `MainActivity.kt`
-   and `android:name="android.permission.REQUEST_INSTALL_PACKAGES"` in
-   `AndroidManifest.xml`).
+   (`<cache>/updates/`), then streamed into a `PackageInstaller` session
+   (see `MainActivity.kt` and `android.permission.REQUEST_INSTALL_PACKAGES`
+   in `AndroidManifest.xml`), which reports back a final status instead of
+   the app just firing off an intent and hoping.
 3. The OS will prompt to allow "install unknown apps" for QuetzaLib the
    first time (Android's standard sideload-install flow), then shows the
    normal package-installer confirmation screen. Installing over the
    existing app keeps your local library/settings intact, same as any
    Android app update.
+4. If Android rejects the install because this build is signed with a
+   different certificate than the one already on the device (see
+   [Release builds](#release-builds) below for why that can happen), the
+   app now catches that specific failure (`PackageInstaller.STATUS_FAILURE_CONFLICT`)
+   and shows a clear message telling you to uninstall the old build first,
+   rather than leaving you looking at an opaque system dialog with no
+   explanation from within the app.
 
 This only surfaces releases that are actually published — see
 [Release builds](#release-builds) above for how a new version gets
