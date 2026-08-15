@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:openshelf/models/stamp.dart';
+import 'package:quetzalib/models/stamp.dart';
 
 void main() {
   group('latestStamp', () {

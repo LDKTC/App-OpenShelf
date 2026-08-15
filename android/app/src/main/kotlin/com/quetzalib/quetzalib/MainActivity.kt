@@ -1,4 +1,4 @@
-package com.openshelf.openshelf
+package com.quetzalib.quetzalib
 
 import android.content.Intent
 import android.net.Uri
@@ -9,7 +9,7 @@ import io.flutter.plugin.common.MethodChannel
 import java.io.File
 
 class MainActivity : FlutterActivity() {
-    private val channelName = "openshelf/apk_installer"
+    private val channelName = "quetzalib/apk_installer"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)

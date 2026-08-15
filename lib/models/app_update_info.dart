@@ -1,4 +1,4 @@
-/// A newer OpenShelf build found on GitHub Releases.
+/// A newer QuetzaLib build found on GitHub Releases.
 class AppUpdateInfo {
   const AppUpdateInfo({
     required this.version,

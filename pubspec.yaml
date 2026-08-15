@@ -1,8 +1,8 @@
-name: openshelf
-description: "OpenShelf - scan a book's ISBN, look up its details, and manage your personal library."
+name: quetzalib
+description: "QuetzaLib - scan a book's ISBN, look up its details, and manage your personal library."
 publish_to: 'none'
 
-version: 1.0.2+3
+version: 1.0.0+1
 
 environment:
   sdk: ^3.9.2

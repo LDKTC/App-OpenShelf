@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:openshelf/services/isbn_utils.dart';
+import 'package:quetzalib/services/isbn_utils.dart';
 
 void main() {
   group('IsbnUtils', () {

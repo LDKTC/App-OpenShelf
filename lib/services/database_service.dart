@@ -12,7 +12,7 @@ class DatabaseService {
   DatabaseService._internal();
   static final DatabaseService instance = DatabaseService._internal();
 
-  static const _dbName = 'openshelf.db';
+  static const _dbName = 'quetzalib.db';
   static const _dbVersion = 2;
 
   Database? _db;
