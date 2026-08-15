@@ -15,7 +15,7 @@ class DocumentScannerService {
   Future<String?> scanSinglePage() async {
     final scanner = DocumentScanner(
       options: DocumentScannerOptions(
-        documentFormat: DocumentFormat.jpeg,
+        documentFormats: const {DocumentFormat.jpeg},
         mode: ScannerMode.filter,
         pageLimit: 1,
         isGalleryImport: false,
@@ -23,7 +23,8 @@ class DocumentScannerService {
     );
     try {
       final result = await scanner.scanDocument();
-      return result.images.isEmpty ? null : result.images.first;
+      final images = result.images;
+      return (images == null || images.isEmpty) ? null : images.first;
     } finally {
       await scanner.close();
     }

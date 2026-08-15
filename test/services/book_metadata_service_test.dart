@@ -27,43 +27,35 @@ class _FakeGoogleBooks implements GoogleBooksProvider {
 }
 
 class _FakeOpenLibrary implements OpenLibraryProvider {
-  _FakeOpenLibrary(this._calls, {this.result, this.error});
+  _FakeOpenLibrary(this._calls);
   final List<String> _calls;
-  final BookMetadata? result;
-  final Object? error;
 
   @override
   Future<BookMetadata?> lookup(String isbn13) async {
     _calls.add('open_library');
-    if (error != null) throw error!;
-    return result;
+    return null;
   }
 }
 
 class _FakeNltAlmaSru implements NltAlmaSruProvider {
-  _FakeNltAlmaSru(this._calls, {this.result, this.error});
+  _FakeNltAlmaSru(this._calls);
   final List<String> _calls;
-  final BookMetadata? result;
-  final Object? error;
 
   @override
   Future<BookMetadata?> lookup(String isbn13) async {
     _calls.add('nlt_alma_sru');
-    if (error != null) throw error!;
-    return result;
+    return null;
   }
 }
 
 class _FakeRanobeDb implements RanobeDbProvider {
-  _FakeRanobeDb(this._calls, {this.result, this.error});
+  _FakeRanobeDb(this._calls, {this.result});
   final List<String> _calls;
   final BookMetadata? result;
-  final Object? error;
 
   @override
   Future<BookMetadata?> lookup(String isbn13) async {
     _calls.add('ranobedb');
-    if (error != null) throw error!;
     return result;
   }
 }
