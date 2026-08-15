@@ -17,14 +17,18 @@ import '../../models/book_metadata.dart';
 /// expected, and callers already treat a null result as "try the next
 /// provider".
 class RanobeDbProvider {
+  RanobeDbProvider({http.Client? client}) : _client = client ?? http.Client();
+
   static const _endpoint = 'https://ranobedb.org/api/v0';
   static const _imageBase = 'https://images.ranobedb.org';
+
+  final http.Client _client;
 
   Future<BookMetadata?> lookup(String isbn13) async {
     final searchUri = Uri.parse('$_endpoint/books').replace(
       queryParameters: {'q': isbn13, 'limit': '5'},
     );
-    final searchResponse = await http
+    final searchResponse = await _client
         .get(searchUri)
         .timeout(const Duration(seconds: 10));
     if (searchResponse.statusCode != 200) return null;
@@ -38,7 +42,7 @@ class RanobeDbProvider {
       if (id == null) continue;
 
       final detailUri = Uri.parse('$_endpoint/book/$id');
-      final detailResponse = await http
+      final detailResponse = await _client
           .get(detailUri)
           .timeout(const Duration(seconds: 10));
       if (detailResponse.statusCode != 200) continue;
