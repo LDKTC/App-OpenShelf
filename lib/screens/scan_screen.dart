@@ -5,11 +5,9 @@ import 'package:provider/provider.dart';
 import '../models/book_metadata.dart';
 import '../services/book_lookup_service.dart';
 import '../services/isbn_utils.dart';
-import '../services/settings_service.dart';
 import '../state/library_provider.dart';
 import 'book_detail_screen.dart';
 import 'book_edit_screen.dart';
-import 'settings_screen.dart';
 
 /// What a detected ISBN does once resolved.
 enum ScanMode {
@@ -42,8 +40,6 @@ class _ScanScreenState extends State<ScanScreen> {
 
   bool _busy = false;
   String? _statusMessage;
-  String? _unmatchedIsbn13;
-  bool _showSettingsHint = false;
 
   // Only used in ScanMode.search: the scanned ISBN wasn't in the library,
   // so offer to add it instead (carrying over any metadata already found).
@@ -69,8 +65,6 @@ class _ScanScreenState extends State<ScanScreen> {
     setState(() {
       _busy = true;
       _statusMessage = 'Looking up $raw...';
-      _showSettingsHint = false;
-      _unmatchedIsbn13 = null;
       _searchMissIsbn13 = null;
       _searchMissMetadata = null;
     });
@@ -120,38 +114,12 @@ class _ScanScreenState extends State<ScanScreen> {
   }
 
   Future<void> _handleAddNotFound(String isbn13) async {
-    if (IsbnUtils.isThaiIsbn(isbn13)) {
-      final sruUrl = await SettingsService.instance.getSruBaseUrl();
-      if (!mounted) return;
-      if (sruUrl == null || sruUrl.isEmpty) {
-        setState(() {
-          _busy = false;
-          _unmatchedIsbn13 = isbn13;
-          _showSettingsHint = true;
-          _statusMessage = 'No metadata found for $isbn13. This is a Thai '
-              'ISBN, and the National Library of Thailand lookup isn\'t '
-              'set up yet — configure it in Settings for better results, '
-              'or add this book manually.';
-        });
-        return;
-      }
-    }
     setState(() {
       _statusMessage =
           'No metadata found for $isbn13. You can still add it manually.';
     });
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => BookEditScreen(prefillIsbn13: isbn13),
-      ),
-    );
-  }
-
-  void _addUnmatchedManually() {
-    final isbn13 = _unmatchedIsbn13;
-    if (isbn13 == null) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (_) => BookEditScreen(prefillIsbn13: isbn13),
@@ -179,19 +147,6 @@ class _ScanScreenState extends State<ScanScreen> {
       _statusMessage = null;
       _searchMissIsbn13 = null;
       _searchMissMetadata = null;
-    });
-    await _controller.start();
-  }
-
-  Future<void> _openSettings() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const SettingsScreen()),
-    );
-    if (!mounted) return;
-    setState(() {
-      _showSettingsHint = false;
-      _statusMessage = null;
-      _unmatchedIsbn13 = null;
     });
     await _controller.start();
   }
@@ -240,23 +195,6 @@ class _ScanScreenState extends State<ScanScreen> {
                           Expanded(child: Text(_statusMessage!)),
                         ],
                       ),
-                      if (_showSettingsHint) ...[
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            TextButton(
-                              onPressed: _addUnmatchedManually,
-                              child: const Text('Add manually'),
-                            ),
-                            const SizedBox(width: 8),
-                            FilledButton(
-                              onPressed: _openSettings,
-                              child: const Text('Open Settings'),
-                            ),
-                          ],
-                        ),
-                      ],
                       if (_searchMissIsbn13 != null) ...[
                         const SizedBox(height: 12),
                         Row(

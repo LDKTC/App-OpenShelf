@@ -28,11 +28,5 @@ void main() {
     test('rejects invalid input', () {
       expect(IsbnUtils.normalizeToIsbn13('not an isbn'), isNull);
     });
-
-    test('recognizes Thai ISBN group identifiers', () {
-      expect(IsbnUtils.isThaiIsbn('9786160000000'), isTrue);
-      expect(IsbnUtils.isThaiIsbn('9789740000000'), isTrue);
-      expect(IsbnUtils.isThaiIsbn('9780306406157'), isFalse);
-    });
   });
 }

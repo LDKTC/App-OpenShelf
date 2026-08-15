@@ -61,11 +61,4 @@ class IsbnUtils {
     if (isValidIsbn10(v)) return isbn10ToIsbn13(v);
     return null;
   }
-
-  /// Thailand's ISBN group identifiers: "616" (current, since 2007) and
-  /// "974" (used before 2007). Both are always preceded by the "978" EAN
-  /// bookland prefix.
-  static bool isThaiIsbn(String isbn13) {
-    return isbn13.startsWith('978616') || isbn13.startsWith('978974');
-  }
 }

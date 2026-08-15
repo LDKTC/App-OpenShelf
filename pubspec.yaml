@@ -35,7 +35,6 @@ dependencies:
 
   # Networking + metadata parsing
   http: ^1.2.2
-  xml: ^6.5.0
 
   # App update (in-place APK install over an existing install)
   package_info_plus: ^8.0.0
