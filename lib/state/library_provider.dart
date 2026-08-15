@@ -54,7 +54,7 @@ class LibraryProvider extends ChangeNotifier {
   Map<int, List<ReadingStamp>> _stampsByBook = {};
   Map<int, List<BookCoverPreset>> _coverPresetsByBook = {};
   Map<int, List<BookPage>> _pagesByBook = {};
-  ShelfDisplayMode _shelfDisplayMode = ShelfDisplayMode.cover;
+  LibraryViewMode _viewMode = LibraryViewMode.list;
   AppLocale _appLocale = AppLocale.system;
 
   String _searchQuery = '';
@@ -67,7 +67,8 @@ class LibraryProvider extends ChangeNotifier {
   LibraryStatusFilter? get statusFilter => _statusFilter;
   int? get categoryFilterId => _categoryFilterId;
   bool get loading => _loading;
-  ShelfDisplayMode get shelfDisplayMode => _shelfDisplayMode;
+  LibraryViewMode get viewMode => _viewMode;
+  ShelfDisplayMode get shelfDisplayMode => _viewMode.shelfDisplayMode;
   AppLocale get appLocale => _appLocale;
 
   List<int> categoryIdsFor(int bookId) =>
@@ -79,6 +80,25 @@ class LibraryProvider extends ChangeNotifier {
     }
     return null;
   }
+
+  // ---------------------------------------------------------------------
+  // Previously-used field values, for the edit form's suggestion dropdowns
+  // ---------------------------------------------------------------------
+
+  Set<String> get knownAuthors => {for (final b in _books) ...b.authors};
+
+  Set<String> get knownIllustrators =>
+      {for (final b in _books) ...b.illustrators};
+
+  Set<String> get knownPublishers => {
+        for (final b in _books)
+          if (b.publisher != null && b.publisher!.isNotEmpty) b.publisher!,
+      };
+
+  Set<String> get knownSeries => {
+        for (final b in _books)
+          if (b.series != null && b.series!.isNotEmpty) b.series!,
+      };
 
   /// The most recent stamp for [bookId] (by timestamp), or null if the
   /// book has no stamps yet — i.e. "not started".
@@ -149,7 +169,7 @@ class LibraryProvider extends ChangeNotifier {
       await _db.getAllBookPages(),
       (p) => p.bookId,
     );
-    _shelfDisplayMode = await _settings.getShelfDisplayMode();
+    _viewMode = await _settings.getLibraryViewMode();
     _appLocale = await _settings.getAppLocale();
     _loading = false;
     notifyListeners();
@@ -181,11 +201,15 @@ class LibraryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> setShelfDisplayMode(ShelfDisplayMode mode) async {
-    _shelfDisplayMode = mode;
+  Future<void> setViewMode(LibraryViewMode mode) async {
+    _viewMode = mode;
     notifyListeners();
-    await _settings.setShelfDisplayMode(mode);
+    await _settings.setLibraryViewMode(mode);
   }
+
+  /// Advances the single view-toggle button to the next mode in its cycle
+  /// (list -> shelf covers -> shelf spines -> list).
+  Future<void> cycleViewMode() => setViewMode(_viewMode.next);
 
   Future<void> setAppLocale(AppLocale locale) async {
     _appLocale = locale;
