@@ -65,10 +65,11 @@ class AppLocalizations {
   // Library screen
   // ---------------------------------------------------------------------
   String get myLibrary => _t('myLibrary');
-  String get showingSpinesTapForCovers => _t('showingSpinesTapForCovers');
-  String get showingCoversTapForSpines => _t('showingCoversTapForSpines');
-  String get listViewTooltip => _t('listViewTooltip');
-  String get shelfViewTooltip => _t('shelfViewTooltip');
+  String get viewModeListLabel => _t('viewModeListLabel');
+  String get viewModeShelfCoverLabel => _t('viewModeShelfCoverLabel');
+  String get viewModeShelfSpineLabel => _t('viewModeShelfSpineLabel');
+  String switchToViewMode(String mode) =>
+      _p('switchToViewMode', {'mode': mode});
   String get searchHint => _t('searchHint');
   String get scanToSearch => _t('scanToSearch');
   String get filterAll => _t('filterAll');
@@ -127,6 +128,7 @@ class AppLocalizations {
   String get useApiCoverForFront => _t('useApiCoverForFront');
   String get presetLabelField => _t('presetLabelField');
   String get presetLabelHint => _t('presetLabelHint');
+  String get replaceTooltip => _t('replaceTooltip');
 
   // ---------------------------------------------------------------------
   // Reading timeline (stamp_timeline.dart)
@@ -220,6 +222,7 @@ class AppLocalizations {
   String get tapPhotosHint => _t('tapPhotosHint');
   String get useOnShelfLabel => _t('useOnShelfLabel');
   String get renameTooltip => _t('renameTooltip');
+  String get editPhotosTooltip => _t('editPhotosTooltip');
 
   // ---------------------------------------------------------------------
   // Book detail screen (book_detail_screen.dart)
@@ -239,6 +242,8 @@ class AppLocalizations {
   String illustratedBy(String names) => _p('illustratedBy', {'names': names});
   String isbnLabel(String isbn) => _p('isbnLabel', {'isbn': isbn});
   String sourceLabel(String source) => _p('sourceLabel', {'source': source});
+  String get book3DPreviewTitle => _t('book3DPreviewTitle');
+  String get book3DFlipHint => _t('book3DFlipHint');
 
   // ---------------------------------------------------------------------
   // Book edit screen (book_edit_screen.dart)
@@ -249,6 +254,7 @@ class AppLocalizations {
   String get titleRequiredError => _t('titleRequiredError');
   String get authorsField => _t('authorsField');
   String get illustratorsField => _t('illustratorsField');
+  String get seriesField => _t('seriesField');
   String get isbn13Field => _t('isbn13Field');
   String get publisherField => _t('publisherField');
   String get publishedDateField => _t('publishedDateField');
@@ -307,10 +313,10 @@ const _en = <String, String>{
 
   // Library screen
   'myLibrary': 'My Library',
-  'showingSpinesTapForCovers': 'Showing spines · tap for covers',
-  'showingCoversTapForSpines': 'Showing covers · tap for spines',
-  'listViewTooltip': 'List view',
-  'shelfViewTooltip': 'Shelf view',
+  'viewModeListLabel': 'List view',
+  'viewModeShelfCoverLabel': 'Shelf view (covers)',
+  'viewModeShelfSpineLabel': 'Shelf view (spines)',
+  'switchToViewMode': 'Switch to {mode}',
   'searchHint': 'Search title, author, ISBN',
   'scanToSearch': 'Scan to search',
   'filterAll': 'All',
@@ -364,6 +370,7 @@ const _en = <String, String>{
   'useApiCoverForFront': 'Use existing API cover for front',
   'presetLabelField': 'Preset label (optional)',
   'presetLabelHint': 'e.g. Hardcover 2020',
+  'replaceTooltip': 'Replace photo',
 
   // Reading timeline
   'readingTimelineTitle': 'Reading timeline',
@@ -457,9 +464,12 @@ const _en = <String, String>{
   'coverThumbFront': 'Front',
   'coverThumbSpine': 'Spine',
   'coverThumbBack': 'Back',
-  'tapPhotosHint': 'Tap the photos to add or replace any of them.',
+  'tapPhotosHint':
+      'Tap a photo to view it full-size, or use the edit button below to '
+          'add, replace, or scan new ones.',
   'useOnShelfLabel': 'Use on shelf',
   'renameTooltip': 'Rename',
+  'editPhotosTooltip': 'Edit photos',
 
   // Book detail screen (book_detail_screen.dart)
   'bookRemovedMessage': 'This book was removed.',
@@ -476,6 +486,8 @@ const _en = <String, String>{
   'illustratedBy': 'Illustrated by {names}',
   'isbnLabel': 'ISBN {isbn}',
   'sourceLabel': 'Source: {source}',
+  'book3DPreviewTitle': '3D preview',
+  'book3DFlipHint': 'Tap the cover to flip it around.',
 
   // Book edit screen (book_edit_screen.dart)
   'editBookTitle': 'Edit Book',
@@ -484,6 +496,7 @@ const _en = <String, String>{
   'titleRequiredError': 'Title is required',
   'authorsField': 'Authors (comma-separated)',
   'illustratorsField': 'Illustrators (comma-separated)',
+  'seriesField': 'Series',
   'isbn13Field': 'ISBN-13',
   'publisherField': 'Publisher',
   'publishedDateField': 'Published date',
@@ -524,10 +537,10 @@ const _th = <String, String>{
 
   // Library screen
   'myLibrary': 'คลังหนังสือของฉัน',
-  'showingSpinesTapForCovers': 'กำลังแสดงสันหนังสือ · แตะเพื่อดูปกหนังสือ',
-  'showingCoversTapForSpines': 'กำลังแสดงปกหนังสือ · แตะเพื่อดูสันหนังสือ',
-  'listViewTooltip': 'มุมมองรายการ',
-  'shelfViewTooltip': 'มุมมองชั้นหนังสือ',
+  'viewModeListLabel': 'มุมมองรายการ',
+  'viewModeShelfCoverLabel': 'มุมมองชั้นหนังสือ (ปก)',
+  'viewModeShelfSpineLabel': 'มุมมองชั้นหนังสือ (สัน)',
+  'switchToViewMode': 'สลับไปที่{mode}',
   'searchHint': 'ค้นหาชื่อเรื่อง ผู้แต่ง หรือ ISBN',
   'scanToSearch': 'สแกนเพื่อค้นหา',
   'filterAll': 'ทั้งหมด',
@@ -577,6 +590,7 @@ const _th = <String, String>{
   'useApiCoverForFront': 'ใช้ปกจาก API ที่มีอยู่แล้วสำหรับปกหน้า',
   'presetLabelField': 'ป้ายกำกับชุดปก (ไม่บังคับ)',
   'presetLabelHint': 'เช่น ปกแข็ง 2020',
+  'replaceTooltip': 'เปลี่ยนรูปภาพ',
 
   // Reading timeline
   'readingTimelineTitle': 'ไทม์ไลน์การอ่าน',
@@ -656,9 +670,10 @@ const _th = <String, String>{
   'coverThumbFront': 'ปกหน้า',
   'coverThumbSpine': 'สันหนังสือ',
   'coverThumbBack': 'ปกหลัง',
-  'tapPhotosHint': 'แตะที่รูปภาพเพื่อเพิ่มหรือแทนที่รูปใดก็ได้',
+  'tapPhotosHint': 'แตะที่รูปภาพเพื่อดูแบบเต็ม หรือใช้ปุ่มแก้ไขด้านล่างเพื่อเพิ่ม แทนที่ หรือสแกนรูปใหม่',
   'useOnShelfLabel': 'ใช้บนชั้นหนังสือ',
   'renameTooltip': 'เปลี่ยนชื่อ',
+  'editPhotosTooltip': 'แก้ไขรูปภาพ',
 
   // Book detail screen (book_detail_screen.dart)
   'bookRemovedMessage': 'หนังสือเล่มนี้ถูกลบไปแล้ว',
@@ -675,6 +690,8 @@ const _th = <String, String>{
   'illustratedBy': 'ภาพประกอบโดย {names}',
   'isbnLabel': 'ISBN {isbn}',
   'sourceLabel': 'ที่มา: {source}',
+  'book3DPreviewTitle': 'ภาพจำลอง 3 มิติ',
+  'book3DFlipHint': 'แตะที่ปกหนังสือเพื่อพลิกดูอีกด้าน',
 
   // Book edit screen (book_edit_screen.dart)
   'editBookTitle': 'แก้ไขหนังสือ',
@@ -683,6 +700,7 @@ const _th = <String, String>{
   'titleRequiredError': 'กรุณากรอกชื่อเรื่อง',
   'authorsField': 'ผู้แต่ง (คั่นด้วยจุลภาค)',
   'illustratorsField': 'ผู้วาดภาพประกอบ (คั่นด้วยจุลภาค)',
+  'seriesField': 'ซีรีย์',
   'isbn13Field': 'ISBN-13',
   'publisherField': 'สำนักพิมพ์',
   'publishedDateField': 'วันที่เผยแพร่',

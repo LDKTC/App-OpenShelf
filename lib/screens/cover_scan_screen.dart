@@ -10,6 +10,7 @@ import '../models/cover_preset.dart';
 import '../services/document_scanner_service.dart';
 import '../services/image_storage_service.dart';
 import '../state/library_provider.dart';
+import '../widgets/full_image_viewer.dart';
 
 enum _CoverSlot { front, spine, back }
 
@@ -327,20 +328,24 @@ class _SlotTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final pickedFile = state.pickedFile;
     final basePath = state.cleared ? null : state.basePath;
     final hasImage = pickedFile != null || basePath != null;
+    final previewPath = pickedFile?.path ?? basePath;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          slot.label(AppLocalizations.of(context)),
+          slot.label(t),
           style: Theme.of(context).textTheme.labelLarge,
         ),
         const SizedBox(height: 8),
         InkWell(
-          onTap: onTap,
+          onTap: hasImage
+              ? () => showFullImagePreview(context, previewPath!)
+              : onTap,
           borderRadius: BorderRadius.circular(8),
           child: Container(
             height: 160,
@@ -361,12 +366,18 @@ class _SlotTile extends StatelessWidget {
                   Image.network(basePath, fit: BoxFit.cover)
                 else
                   Image.file(File(basePath), fit: BoxFit.cover),
-                if (hasImage)
+                if (hasImage) ...[
                   Positioned(
                     top: 4,
                     right: 4,
                     child: _ClearButton(onPressed: onClear),
                   ),
+                  Positioned(
+                    bottom: 4,
+                    right: 4,
+                    child: _ReplaceButton(onPressed: onTap, tooltip: t.replaceTooltip),
+                  ),
+                ],
               ],
             ),
           ),
@@ -389,6 +400,27 @@ class _ClearButton extends StatelessWidget {
       child: IconButton(
         icon: const Icon(Icons.close, color: Colors.white, size: 18),
         onPressed: onPressed,
+        visualDensity: VisualDensity.compact,
+      ),
+    );
+  }
+}
+
+class _ReplaceButton extends StatelessWidget {
+  const _ReplaceButton({required this.onPressed, required this.tooltip});
+
+  final VoidCallback onPressed;
+  final String tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black54,
+      shape: const CircleBorder(),
+      child: IconButton(
+        icon: const Icon(Icons.edit_outlined, color: Colors.white, size: 18),
+        onPressed: onPressed,
+        tooltip: tooltip,
         visualDensity: VisualDensity.compact,
       ),
     );

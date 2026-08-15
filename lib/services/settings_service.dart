@@ -37,34 +37,65 @@ enum AppLocale {
 }
 
 /// How books render on the visual shelf: as their front cover, or as their
-/// spine (each book's active cover preset supplies both images). This is a
-/// single app-wide setting, not per-book.
+/// spine (each book's active cover preset supplies both images). Derived
+/// from [LibraryViewMode] — it's only meaningful for the two shelf modes,
+/// but the shelf-rendering widgets only ever care about cover-vs-spine, not
+/// whether list view is also in the rotation.
 enum ShelfDisplayMode {
   cover,
   spine;
-
-  String get storageValue => name;
 
   String label(AppLocalizations t) => switch (this) {
         ShelfDisplayMode.cover => t.shelfModeCover,
         ShelfDisplayMode.spine => t.shelfModeSpine,
       };
+}
 
-  static ShelfDisplayMode fromStorage(String? value) {
-    return ShelfDisplayMode.values.firstWhere(
+/// The library screen's single view toggle button cycles through all three
+/// of these in order: a flat list, the visual shelf showing front covers,
+/// and the visual shelf showing spines.
+enum LibraryViewMode {
+  list,
+  shelfCover,
+  shelfSpine;
+
+  String get storageValue => name;
+
+  /// The [ShelfDisplayMode] to render with when this mode is one of the two
+  /// shelf modes; meaningless (and unused) for [list].
+  ShelfDisplayMode get shelfDisplayMode =>
+      this == LibraryViewMode.shelfSpine
+          ? ShelfDisplayMode.spine
+          : ShelfDisplayMode.cover;
+
+  /// The mode the view-toggle button switches to next.
+  LibraryViewMode get next => switch (this) {
+        LibraryViewMode.list => LibraryViewMode.shelfCover,
+        LibraryViewMode.shelfCover => LibraryViewMode.shelfSpine,
+        LibraryViewMode.shelfSpine => LibraryViewMode.list,
+      };
+
+  String label(AppLocalizations t) => switch (this) {
+        LibraryViewMode.list => t.viewModeListLabel,
+        LibraryViewMode.shelfCover => t.viewModeShelfCoverLabel,
+        LibraryViewMode.shelfSpine => t.viewModeShelfSpineLabel,
+      };
+
+  static LibraryViewMode fromStorage(String? value) {
+    return LibraryViewMode.values.firstWhere(
       (m) => m.storageValue == value,
-      orElse: () => ShelfDisplayMode.cover,
+      orElse: () => LibraryViewMode.list,
     );
   }
 }
 
 /// Persists user-configurable app settings: the optional Cloud Vision API
-/// key used for OCR text scanning, and the shelf display mode.
+/// key used for OCR text scanning, and the library view mode.
 class SettingsService {
   SettingsService._internal();
   static final SettingsService instance = SettingsService._internal();
 
-  static const _keyShelfDisplayMode = 'shelf_display_mode';
+  static const _keyLibraryViewMode = 'library_view_mode';
   static const _keyCloudVisionApiKey = 'cloud_vision_api_key';
   static const _keyAppLocale = 'app_locale';
 
@@ -96,13 +127,13 @@ class SettingsService {
     }
   }
 
-  Future<ShelfDisplayMode> getShelfDisplayMode() async {
+  Future<LibraryViewMode> getLibraryViewMode() async {
     final prefs = await SharedPreferences.getInstance();
-    return ShelfDisplayMode.fromStorage(prefs.getString(_keyShelfDisplayMode));
+    return LibraryViewMode.fromStorage(prefs.getString(_keyLibraryViewMode));
   }
 
-  Future<void> setShelfDisplayMode(ShelfDisplayMode mode) async {
+  Future<void> setLibraryViewMode(LibraryViewMode mode) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyShelfDisplayMode, mode.storageValue);
+    await prefs.setString(_keyLibraryViewMode, mode.storageValue);
   }
 }

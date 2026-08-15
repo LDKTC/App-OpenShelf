@@ -8,6 +8,7 @@ import '../models/book.dart';
 import '../models/cover_preset.dart';
 import '../services/image_storage_service.dart';
 import '../state/library_provider.dart';
+import '../widgets/full_image_viewer.dart';
 import 'cover_scan_screen.dart';
 
 /// Manage a book's saved cover/spine/back-cover presets: pick which one
@@ -88,6 +89,16 @@ class _PresetCard extends StatelessWidget {
         builder: (_) => CoverScanScreen(book: book, existingPreset: preset),
       ),
     );
+  }
+
+  /// Tapping a thumbnail that already has a photo shows it immediately;
+  /// an empty slot instead opens the edit screen to fill it in.
+  void _openThumb(BuildContext context, String? path) {
+    if (path != null) {
+      showFullImagePreview(context, path);
+    } else {
+      _editPhotos(context);
+    }
   }
 
   Future<void> _rename(BuildContext context, LibraryProvider library) async {
@@ -177,18 +188,26 @@ class _PresetCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-            InkWell(
-              onTap: () => _editPhotos(context),
-              borderRadius: BorderRadius.circular(6),
-              child: Row(
-                children: [
-                  _Thumb(path: preset.frontImagePath, label: t.coverThumbFront),
-                  const SizedBox(width: 8),
-                  _Thumb(path: preset.spineImagePath, label: t.coverThumbSpine),
-                  const SizedBox(width: 8),
-                  _Thumb(path: preset.backImagePath, label: t.coverThumbBack),
-                ],
-              ),
+            Row(
+              children: [
+                _Thumb(
+                  path: preset.frontImagePath,
+                  label: t.coverThumbFront,
+                  onTap: () => _openThumb(context, preset.frontImagePath),
+                ),
+                const SizedBox(width: 8),
+                _Thumb(
+                  path: preset.spineImagePath,
+                  label: t.coverThumbSpine,
+                  onTap: () => _openThumb(context, preset.spineImagePath),
+                ),
+                const SizedBox(width: 8),
+                _Thumb(
+                  path: preset.backImagePath,
+                  label: t.coverThumbBack,
+                  onTap: () => _openThumb(context, preset.backImagePath),
+                ),
+              ],
             ),
             Padding(
               padding: const EdgeInsets.only(top: 4),
@@ -206,6 +225,11 @@ class _PresetCard extends StatelessWidget {
                         library.setActiveCoverPreset(preset.bookId, preset.id!),
                     child: Text(t.useOnShelfLabel),
                   ),
+                IconButton(
+                  icon: const Icon(Icons.photo_camera_back_outlined, size: 20),
+                  onPressed: () => _editPhotos(context),
+                  tooltip: t.editPhotosTooltip,
+                ),
                 IconButton(
                   icon: const Icon(Icons.drive_file_rename_outline, size: 20),
                   onPressed: () => _rename(context, library),
@@ -226,10 +250,11 @@ class _PresetCard extends StatelessWidget {
 }
 
 class _Thumb extends StatelessWidget {
-  const _Thumb({required this.path, required this.label});
+  const _Thumb({required this.path, required this.label, required this.onTap});
 
   final String? path;
   final String label;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -238,17 +263,24 @@ class _Thumb extends StatelessWidget {
         children: [
           AspectRatio(
             aspectRatio: 0.72,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(6),
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(6),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                clipBehavior: Clip.antiAlias,
+                // BoxFit.contain (not cover): a narrow spine photo should
+                // show in full, auto-scaled to fit the box, rather than
+                // being cropped to this cell's front-cover-ish aspect ratio.
+                child: path == null
+                    ? const Icon(Icons.image_not_supported_outlined, size: 20)
+                    : (isRemoteImagePath(path!)
+                        ? Image.network(path!, fit: BoxFit.contain)
+                        : Image.file(File(path!), fit: BoxFit.contain)),
               ),
-              clipBehavior: Clip.antiAlias,
-              child: path == null
-                  ? const Icon(Icons.image_not_supported_outlined, size: 20)
-                  : (isRemoteImagePath(path!)
-                      ? Image.network(path!, fit: BoxFit.cover)
-                      : Image.file(File(path!), fit: BoxFit.cover)),
             ),
           ),
           const SizedBox(height: 4),

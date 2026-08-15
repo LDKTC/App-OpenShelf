@@ -11,6 +11,14 @@ import 'book_edit_screen.dart';
 import 'isbn_entry_screen.dart';
 import 'scan_screen.dart';
 
+extension on LibraryViewMode {
+  IconData get icon => switch (this) {
+        LibraryViewMode.list => Icons.view_list_outlined,
+        LibraryViewMode.shelfCover => Icons.grid_view_outlined,
+        LibraryViewMode.shelfSpine => Icons.menu_book_outlined,
+      };
+}
+
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
 
@@ -20,7 +28,6 @@ class LibraryScreen extends StatefulWidget {
 
 class _LibraryScreenState extends State<LibraryScreen> {
   final _searchController = TextEditingController();
-  bool _shelfView = false;
 
   @override
   void dispose() {
@@ -44,26 +51,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
       appBar: AppBar(
         title: Text(t.myLibrary),
         actions: [
-          if (_shelfView)
-            IconButton(
-              icon: Icon(
-                library.shelfDisplayMode == ShelfDisplayMode.spine
-                    ? Icons.menu_book_outlined
-                    : Icons.view_agenda_outlined,
-              ),
-              tooltip: library.shelfDisplayMode == ShelfDisplayMode.spine
-                  ? t.showingSpinesTapForCovers
-                  : t.showingCoversTapForSpines,
-              onPressed: () => library.setShelfDisplayMode(
-                library.shelfDisplayMode == ShelfDisplayMode.spine
-                    ? ShelfDisplayMode.cover
-                    : ShelfDisplayMode.spine,
-              ),
-            ),
           IconButton(
-            icon: Icon(_shelfView ? Icons.view_list_outlined : Icons.grid_view_outlined),
-            tooltip: _shelfView ? t.listViewTooltip : t.shelfViewTooltip,
-            onPressed: () => setState(() => _shelfView = !_shelfView),
+            icon: Icon(library.viewMode.icon),
+            tooltip: t.switchToViewMode(library.viewMode.next.label(t)),
+            onPressed: library.cycleViewMode,
           ),
         ],
       ),
@@ -122,21 +113,24 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 ? const Center(child: CircularProgressIndicator())
                 : books.isEmpty
                     ? const _EmptyState()
-                    : (_shelfView
-                        ? ShelfGridView(
-                            onTapBook: (bookId) => _openBook(context, bookId),
-                          )
-                        : ListView.separated(
+                    : (library.viewMode == LibraryViewMode.list
+                        ? ListView.separated(
                             itemCount: books.length,
                             separatorBuilder: (_, __) => const Divider(height: 1),
                             itemBuilder: (context, index) {
                               final book = books[index];
                               return BookListTile(
                                 book: book,
+                                coverImagePath: library
+                                    .activeCoverPresetFor(book.id!)
+                                    ?.frontImagePath,
                                 currentStatus: library.currentStampFor(book.id!)?.type,
                                 onTap: () => _openBook(context, book.id!),
                               );
                             },
+                          )
+                        : ShelfGridView(
+                            onTapBook: (bookId) => _openBook(context, bookId),
                           )),
           ),
         ],

@@ -8,6 +8,8 @@ import '../models/book.dart';
 import '../models/cover_preset.dart';
 import '../services/image_storage_service.dart';
 import '../state/library_provider.dart';
+import '../widgets/book_3d_cover.dart';
+import '../widgets/full_image_viewer.dart';
 import '../widgets/stamp_timeline.dart';
 import '../widgets/status_chip.dart';
 import 'book_edit_screen.dart';
@@ -98,6 +100,15 @@ class BookDetailScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(book.title, style: Theme.of(context).textTheme.titleLarge),
+                    if (book.series != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        book.series!,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              fontStyle: FontStyle.italic,
+                            ),
+                      ),
+                    ],
                     const SizedBox(height: 4),
                     Text(book.authorsDisplay, style: Theme.of(context).textTheme.bodyMedium),
                     if (book.illustrators.isNotEmpty) ...[
@@ -242,6 +253,21 @@ class _CoverArt extends StatelessWidget {
   final Book book;
   final BookCoverPreset? activePreset;
 
+  /// Tapping the cover shows it full-screen: a proper 3D mockup when there's
+  /// a cover preset with at least one scanned face, or a plain zoomable
+  /// preview of the flat API thumbnail otherwise.
+  void _open(BuildContext context) {
+    final preset = activePreset;
+    if (preset != null && !preset.isEmpty) {
+      showBook3DPreview(context, preset);
+      return;
+    }
+    final thumbnailUrl = book.thumbnailUrl;
+    if (thumbnailUrl != null) {
+      showFullImagePreview(context, thumbnailUrl);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final placeholder = Container(
@@ -249,9 +275,10 @@ class _CoverArt extends StatelessWidget {
       child: const Icon(Icons.menu_book_outlined, size: 32),
     );
 
+    Widget image;
     final frontPath = activePreset?.frontImagePath;
     if (frontPath != null) {
-      return isRemoteImagePath(frontPath)
+      image = isRemoteImagePath(frontPath)
           ? Image.network(
               frontPath,
               fit: BoxFit.cover,
@@ -262,17 +289,17 @@ class _CoverArt extends StatelessWidget {
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) => placeholder,
             );
-    }
-
-    if (book.thumbnailUrl != null) {
-      return Image.network(
+    } else if (book.thumbnailUrl != null) {
+      image = Image.network(
         book.thumbnailUrl!,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) => placeholder,
       );
+    } else {
+      image = placeholder;
     }
 
-    return placeholder;
+    return InkWell(onTap: () => _open(context), child: image);
   }
 }
 
