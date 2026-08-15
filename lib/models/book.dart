@@ -4,6 +4,7 @@ class Book {
   final String? isbn10;
   final String title;
   final List<String> authors;
+  final List<String> illustrators;
   final String? publisher;
   final String? publishedDate;
   final String? description;
@@ -21,6 +22,7 @@ class Book {
     this.isbn10,
     required this.title,
     this.authors = const [],
+    this.illustrators = const [],
     this.publisher,
     this.publishedDate,
     this.description,
@@ -42,6 +44,7 @@ class Book {
     String? isbn10,
     String? title,
     List<String>? authors,
+    List<String>? illustrators,
     String? publisher,
     String? publishedDate,
     String? description,
@@ -59,6 +62,7 @@ class Book {
       isbn10: isbn10 ?? this.isbn10,
       title: title ?? this.title,
       authors: authors ?? this.authors,
+      illustrators: illustrators ?? this.illustrators,
       publisher: publisher ?? this.publisher,
       publishedDate: publishedDate ?? this.publishedDate,
       description: description ?? this.description,
@@ -79,6 +83,7 @@ class Book {
       'isbn10': isbn10,
       'title': title,
       'authors': authors.join('|'),
+      'illustrators': illustrators.join('|'),
       'publisher': publisher,
       'publishedDate': publishedDate,
       'description': description,
@@ -94,6 +99,7 @@ class Book {
 
   factory Book.fromMap(Map<String, Object?> map) {
     final authorsRaw = map['authors'] as String?;
+    final illustratorsRaw = map['illustrators'] as String?;
     return Book(
       id: map['id'] as int?,
       isbn13: map['isbn13'] as String?,
@@ -102,6 +108,9 @@ class Book {
       authors: (authorsRaw == null || authorsRaw.isEmpty)
           ? const []
           : authorsRaw.split('|'),
+      illustrators: (illustratorsRaw == null || illustratorsRaw.isEmpty)
+          ? const []
+          : illustratorsRaw.split('|'),
       publisher: map['publisher'] as String?,
       publishedDate: map['publishedDate'] as String?,
       description: map['description'] as String?,

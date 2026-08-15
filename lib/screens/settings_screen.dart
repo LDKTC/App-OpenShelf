@@ -14,10 +14,12 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final _sruUrlController = TextEditingController();
+  final _visionApiKeyController = TextEditingController();
   final _updateService = UpdateService();
   bool _loading = true;
   bool _testing = false;
   String? _testResult;
+  bool _visionKeyObscured = true;
 
   bool _checkingUpdate = false;
   String? _updateStatus;
@@ -35,11 +37,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _load() async {
     final url = await SettingsService.instance.getSruBaseUrl();
     _sruUrlController.text = url ?? '';
+    final visionKey = await SettingsService.instance.getCloudVisionApiKey();
+    _visionApiKeyController.text = visionKey ?? '';
     setState(() => _loading = false);
   }
 
   Future<void> _save() async {
     await SettingsService.instance.setSruBaseUrl(_sruUrlController.text);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Saved.')),
+      );
+    }
+  }
+
+  Future<void> _saveVisionApiKey() async {
+    await SettingsService.instance
+        .setCloudVisionApiKey(_visionApiKeyController.text);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Saved.')),
@@ -118,6 +132,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void dispose() {
     _sruUrlController.dispose();
+    _visionApiKeyController.dispose();
     _updateService.dispose();
     super.dispose();
   }
@@ -177,6 +192,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 12),
                   Text(_testResult!),
                 ],
+                const Divider(height: 40),
+                Text(
+                  'Text scanning (OCR)',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'The camera-scan buttons next to Title, Authors, '
+                  'Illustrators, ISBN, and Publisher in the book editor use '
+                  'on-device text recognition by default — free and '
+                  'offline, but Latin-script only, so Thai text won\'t be '
+                  'read correctly. Enter a Google Cloud Vision API key here '
+                  'to use it instead: it reads Thai as well as Latin text, '
+                  'at the cost of a network request per scan billed to your '
+                  'Cloud account. Leave it blank to keep using on-device '
+                  'recognition.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _visionApiKeyController,
+                  obscureText: _visionKeyObscured,
+                  decoration: InputDecoration(
+                    labelText: 'Cloud Vision API key (optional)',
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _visionKeyObscured
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                      ),
+                      onPressed: () => setState(
+                        () => _visionKeyObscured = !_visionKeyObscured,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                FilledButton(
+                  onPressed: _saveVisionApiKey,
+                  child: const Text('Save'),
+                ),
                 const Divider(height: 40),
                 Text(
                   'App update',

@@ -55,6 +55,7 @@ void main() {
       expect(result, isNotNull);
       expect(result!.title, 'Test Light Novel');
       expect(result.authors, ['Jane Author']);
+      expect(result.illustrators, ['Some Illustrator']);
       expect(result.publisher, 'Yen Press');
       expect(result.publishedDate, '2024-01-01');
       expect(result.description, 'A story.');

@@ -13,7 +13,7 @@ class DatabaseService {
   static final DatabaseService instance = DatabaseService._internal();
 
   static const _dbName = 'quetzalib.db';
-  static const _dbVersion = 2;
+  static const _dbVersion = 3;
 
   Database? _db;
 
@@ -36,6 +36,7 @@ class DatabaseService {
             isbn10 TEXT,
             title TEXT NOT NULL,
             authors TEXT,
+            illustrators TEXT,
             publisher TEXT,
             publishedDate TEXT,
             description TEXT,
@@ -82,6 +83,9 @@ class DatabaseService {
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
           await _migrateToV2(db);
+        }
+        if (oldVersion < 3) {
+          await _migrateToV3(db);
         }
       },
     );
@@ -190,6 +194,12 @@ class DatabaseService {
         }
       }
     });
+  }
+
+  /// Upgrades to v3: adds the `illustrators` column, storage for the
+  /// illustrator credits now scannable/editable alongside authors.
+  Future<void> _migrateToV3(Database db) async {
+    await db.execute('ALTER TABLE books ADD COLUMN illustrators TEXT');
   }
 
   // ---------------------------------------------------------------------

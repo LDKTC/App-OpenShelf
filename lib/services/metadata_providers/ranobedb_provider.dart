@@ -73,14 +73,20 @@ class RanobeDbProvider {
         .toList();
 
     final authors = <String>{};
+    final illustrators = <String>{};
     for (final edition in (book['editions'] as List<dynamic>? ?? [])) {
       final staff =
           (edition as Map<String, dynamic>)['staff'] as List<dynamic>? ?? [];
       for (final entry in staff) {
         final map = entry as Map<String, dynamic>;
-        if (map['role_type'] != 'author') continue;
         final name = (map['name'] as String?) ?? (map['romaji'] as String?);
-        if (name != null && name.isNotEmpty) authors.add(name);
+        if (name == null || name.isEmpty) continue;
+        switch (map['role_type']) {
+          case 'author':
+            authors.add(name);
+          case 'illustrator':
+            illustrators.add(name);
+        }
       }
     }
 
@@ -91,6 +97,7 @@ class RanobeDbProvider {
       isbn13: isbn13,
       title: title,
       authors: authors.toList(),
+      illustrators: illustrators.toList(),
       publisher: publishers.isEmpty ? null : publishers.join(', '),
       publishedDate: book['c_release_date']?.toString(),
       description: (book['description'] as String?)?.trim(),

@@ -4,6 +4,7 @@ class BookMetadata {
   final String? isbn10;
   final String title;
   final List<String> authors;
+  final List<String> illustrators;
   final String? publisher;
   final String? publishedDate;
   final String? description;
@@ -20,6 +21,7 @@ class BookMetadata {
     this.isbn10,
     required this.title,
     this.authors = const [],
+    this.illustrators = const [],
     this.publisher,
     this.publishedDate,
     this.description,
