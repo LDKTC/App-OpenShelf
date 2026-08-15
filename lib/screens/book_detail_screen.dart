@@ -95,6 +95,13 @@ class BookDetailScreen extends StatelessWidget {
                     Text(book.title, style: Theme.of(context).textTheme.titleLarge),
                     const SizedBox(height: 4),
                     Text(book.authorsDisplay, style: Theme.of(context).textTheme.bodyMedium),
+                    if (book.illustrators.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Illustrated by ${book.illustrators.join(', ')}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
                     if (book.publisher != null || book.publishedDate != null) ...[
                       const SizedBox(height: 4),
                       Text(

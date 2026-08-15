@@ -22,10 +22,11 @@ enum ShelfDisplayMode {
   }
 }
 
-/// Persists user-configurable app settings, in particular the National
-/// Library of Thailand (NLT) Alma SRU endpoint, whose exact host is
-/// specific to NLT's Alma tenant and isn't publicly documented — see
-/// README.md for how to find and enter it.
+/// Persists user-configurable app settings: the National Library of
+/// Thailand (NLT) Alma SRU endpoint, whose exact host is specific to NLT's
+/// Alma tenant and isn't publicly documented (see README.md for how to
+/// find and enter it), plus the optional Cloud Vision API key used for OCR
+/// text scanning.
 class SettingsService {
   SettingsService._internal();
   static final SettingsService instance = SettingsService._internal();
@@ -33,6 +34,7 @@ class SettingsService {
   static const _keySruBaseUrl = 'nlt_sru_base_url';
   static const _keySruInstitutionCode = 'nlt_sru_institution_code';
   static const _keyShelfDisplayMode = 'shelf_display_mode';
+  static const _keyCloudVisionApiKey = 'cloud_vision_api_key';
 
   static const defaultInstitutionCode = '66NLT_INST';
 
@@ -58,6 +60,24 @@ class SettingsService {
   Future<void> setSruInstitutionCode(String code) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keySruInstitutionCode, code.trim());
+  }
+
+  /// Google Cloud Vision API key used for OCR text scanning (title, author,
+  /// illustrator, ISBN, publisher). Optional: when unset, OCR scans fall
+  /// back to on-device ML Kit text recognition, which is free and offline
+  /// but only reads Latin-script text — Cloud Vision also reads Thai.
+  Future<String?> getCloudVisionApiKey() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyCloudVisionApiKey);
+  }
+
+  Future<void> setCloudVisionApiKey(String? key) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (key == null || key.trim().isEmpty) {
+      await prefs.remove(_keyCloudVisionApiKey);
+    } else {
+      await prefs.setString(_keyCloudVisionApiKey, key.trim());
+    }
   }
 
   Future<ShelfDisplayMode> getShelfDisplayMode() async {

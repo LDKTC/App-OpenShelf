@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../models/book.dart';
 import '../models/cover_preset.dart';
+import '../services/document_scanner_service.dart';
 import '../services/image_storage_service.dart';
 import '../state/library_provider.dart';
 
@@ -54,8 +55,11 @@ class CoverScanScreen extends StatefulWidget {
   State<CoverScanScreen> createState() => _CoverScanScreenState();
 }
 
+enum _CoverSource { scan, gallery }
+
 class _CoverScanScreenState extends State<CoverScanScreen> {
   final _picker = ImagePicker();
+  final _documentScanner = DocumentScannerService();
   late final TextEditingController _labelController;
   late final Map<_CoverSlot, _SlotState> _slots;
 
@@ -94,21 +98,22 @@ class _CoverScanScreenState extends State<CoverScanScreen> {
       widget.book.thumbnailUrl != null && !_frontIsApiCoverAlready;
 
   Future<void> _pickImage(_CoverSlot slot) async {
-    final source = await showModalBottomSheet<ImageSource>(
+    final source = await showModalBottomSheet<_CoverSource>(
       context: context,
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.camera_alt_outlined),
-              title: const Text('Take photo'),
-              onTap: () => Navigator.of(ctx).pop(ImageSource.camera),
+              leading: const Icon(Icons.document_scanner_outlined),
+              title: const Text('Scan document'),
+              subtitle: const Text('Auto-crops and straightens the page'),
+              onTap: () => Navigator.of(ctx).pop(_CoverSource.scan),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
               title: const Text('Choose from gallery'),
-              onTap: () => Navigator.of(ctx).pop(ImageSource.gallery),
+              onTap: () => Navigator.of(ctx).pop(_CoverSource.gallery),
             ),
           ],
         ),
@@ -116,12 +121,38 @@ class _CoverScanScreenState extends State<CoverScanScreen> {
     );
     if (source == null) return;
 
-    final file = await _picker.pickImage(source: source, imageQuality: 85);
+    if (source == _CoverSource.scan) {
+      await _scanDocument(slot);
+      return;
+    }
+
+    final file =
+        await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
     if (file == null || !mounted) return;
 
     setState(() {
       final s = _slots[slot]!;
       s.pickedFile = file;
+      s.cleared = false;
+    });
+  }
+
+  Future<void> _scanDocument(_CoverSlot slot) async {
+    String? path;
+    try {
+      path = await _documentScanner.scanSinglePage();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Document scan failed: $e')),
+      );
+      return;
+    }
+    if (path == null || !mounted) return;
+
+    setState(() {
+      final s = _slots[slot]!;
+      s.pickedFile = XFile(path!);
       s.cleared = false;
     });
   }

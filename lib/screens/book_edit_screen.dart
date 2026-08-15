@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../models/book.dart';
 import '../models/book_metadata.dart';
+import '../services/ocr_service.dart';
 import '../state/library_provider.dart';
 import 'book_detail_screen.dart';
 
@@ -31,12 +33,17 @@ class _BookEditScreenState extends State<BookEditScreen> {
 
   late final TextEditingController _title;
   late final TextEditingController _authors;
+  late final TextEditingController _illustrators;
   late final TextEditingController _publisher;
   late final TextEditingController _publishedDate;
   late final TextEditingController _isbn13;
   late final TextEditingController _description;
   late final TextEditingController _pageCount;
   late final TextEditingController _notes;
+
+  final _ocrService = OcrService();
+  final _ocrPicker = ImagePicker();
+  bool _scanningField = false;
 
   String? _thumbnailUrl;
   Set<int> _selectedCategoryIds = {};
@@ -52,6 +59,10 @@ class _BookEditScreenState extends State<BookEditScreen> {
     _title = TextEditingController(text: book?.title ?? metadata?.title ?? '');
     _authors = TextEditingController(
       text: (book?.authors ?? metadata?.authors ?? const []).join(', '),
+    );
+    _illustrators = TextEditingController(
+      text: (book?.illustrators ?? metadata?.illustrators ?? const [])
+          .join(', '),
     );
     _publisher = TextEditingController(text: book?.publisher ?? metadata?.publisher ?? '');
     _publishedDate = TextEditingController(
@@ -80,6 +91,7 @@ class _BookEditScreenState extends State<BookEditScreen> {
   void dispose() {
     _title.dispose();
     _authors.dispose();
+    _illustrators.dispose();
     _publisher.dispose();
     _publishedDate.dispose();
     _isbn13.dispose();
@@ -98,6 +110,11 @@ class _BookEditScreenState extends State<BookEditScreen> {
         .map((a) => a.trim())
         .where((a) => a.isNotEmpty)
         .toList();
+    final illustrators = _illustrators.text
+        .split(',')
+        .map((a) => a.trim())
+        .where((a) => a.isNotEmpty)
+        .toList();
 
     final book = Book(
       id: widget.existingBook?.id,
@@ -105,6 +122,7 @@ class _BookEditScreenState extends State<BookEditScreen> {
       isbn10: widget.existingBook?.isbn10 ?? widget.metadata?.isbn10,
       title: _title.text.trim(),
       authors: authors,
+      illustrators: illustrators,
       publisher: _publisher.text.trim().isEmpty ? null : _publisher.text.trim(),
       publishedDate: _publishedDate.text.trim().isEmpty ? null : _publishedDate.text.trim(),
       description: _description.text.trim().isEmpty ? null : _description.text.trim(),
@@ -127,6 +145,57 @@ class _BookEditScreenState extends State<BookEditScreen> {
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => BookDetailScreen(bookId: bookId)),
+    );
+  }
+
+  /// Photographs [fieldLabel]'s text, runs OCR on it, then shows the
+  /// recognized text back to the user for review — nothing is written into
+  /// [controller] unless they explicitly approve it (editing it first if
+  /// needed), so a bad scan never silently overwrites what's there.
+  Future<void> _scanIntoField(
+    TextEditingController controller,
+    String fieldLabel,
+  ) async {
+    if (_scanningField) return;
+    setState(() => _scanningField = true);
+    try {
+      final photo = await _ocrPicker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 90,
+      );
+      if (photo == null || !mounted) return;
+
+      String recognized;
+      try {
+        recognized = await _ocrService.recognizeText(photo.path);
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Text scan failed: $e')),
+        );
+        return;
+      }
+      if (!mounted) return;
+
+      final approved = await showDialog<String>(
+        context: context,
+        builder: (_) => _OcrReviewDialog(
+          fieldLabel: fieldLabel,
+          recognizedText: recognized,
+        ),
+      );
+      if (approved != null) controller.text = approved;
+    } finally {
+      if (mounted) setState(() => _scanningField = false);
+    }
+  }
+
+  Widget _scanButton(String fieldLabel, TextEditingController controller) {
+    return IconButton(
+      icon: const Icon(Icons.document_scanner_outlined),
+      tooltip: 'Scan $fieldLabel',
+      onPressed:
+          _scanningField ? null : () => _scanIntoField(controller, fieldLabel),
     );
   }
 
@@ -155,24 +224,44 @@ class _BookEditScreenState extends State<BookEditScreen> {
               ),
             TextFormField(
               controller: _title,
-              decoration: const InputDecoration(labelText: 'Title'),
+              decoration: InputDecoration(
+                labelText: 'Title',
+                suffixIcon: _scanButton('Title', _title),
+              ),
               validator: (v) => (v == null || v.trim().isEmpty) ? 'Title is required' : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _authors,
-              decoration: const InputDecoration(labelText: 'Authors (comma-separated)'),
+              decoration: InputDecoration(
+                labelText: 'Authors (comma-separated)',
+                suffixIcon: _scanButton('Authors', _authors),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _illustrators,
+              decoration: InputDecoration(
+                labelText: 'Illustrators (comma-separated)',
+                suffixIcon: _scanButton('Illustrators', _illustrators),
+              ),
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _isbn13,
-              decoration: const InputDecoration(labelText: 'ISBN-13'),
+              decoration: InputDecoration(
+                labelText: 'ISBN-13',
+                suffixIcon: _scanButton('ISBN-13', _isbn13),
+              ),
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _publisher,
-              decoration: const InputDecoration(labelText: 'Publisher'),
+              decoration: InputDecoration(
+                labelText: 'Publisher',
+                suffixIcon: _scanButton('Publisher', _publisher),
+              ),
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -221,6 +310,78 @@ class _BookEditScreenState extends State<BookEditScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Shows the OCR text recognized from a scanned photo for [fieldLabel],
+/// editable before it's applied — the approval gate that keeps a bad or
+/// noisy scan from silently overwriting the field. Returns the approved
+/// (possibly hand-edited) text via [Navigator.pop], or null if cancelled.
+class _OcrReviewDialog extends StatefulWidget {
+  const _OcrReviewDialog({required this.fieldLabel, required this.recognizedText});
+
+  final String fieldLabel;
+  final String recognizedText;
+
+  @override
+  State<_OcrReviewDialog> createState() => _OcrReviewDialogState();
+}
+
+class _OcrReviewDialogState extends State<_OcrReviewDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.recognizedText);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Review scanned ${widget.fieldLabel}'),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.recognizedText.isEmpty
+                  ? 'No text was recognized in the photo. You can type it '
+                      'in manually below, or cancel and try again.'
+                  : 'Edit if needed, then use this text to fill in '
+                      '${widget.fieldLabel}.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _controller,
+              autofocus: true,
+              maxLines: 5,
+              minLines: 1,
+              decoration: const InputDecoration(border: OutlineInputBorder()),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(_controller.text.trim()),
+          child: const Text('Use this text'),
+        ),
+      ],
     );
   }
 }

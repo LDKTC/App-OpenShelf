@@ -17,14 +17,18 @@ import '../../models/book_metadata.dart';
 /// expected, and callers already treat a null result as "try the next
 /// provider".
 class RanobeDbProvider {
+  RanobeDbProvider({http.Client? client}) : _client = client ?? http.Client();
+
   static const _endpoint = 'https://ranobedb.org/api/v0';
   static const _imageBase = 'https://images.ranobedb.org';
+
+  final http.Client _client;
 
   Future<BookMetadata?> lookup(String isbn13) async {
     final searchUri = Uri.parse('$_endpoint/books').replace(
       queryParameters: {'q': isbn13, 'limit': '5'},
     );
-    final searchResponse = await http
+    final searchResponse = await _client
         .get(searchUri)
         .timeout(const Duration(seconds: 10));
     if (searchResponse.statusCode != 200) return null;
@@ -38,7 +42,7 @@ class RanobeDbProvider {
       if (id == null) continue;
 
       final detailUri = Uri.parse('$_endpoint/book/$id');
-      final detailResponse = await http
+      final detailResponse = await _client
           .get(detailUri)
           .timeout(const Duration(seconds: 10));
       if (detailResponse.statusCode != 200) continue;
@@ -69,14 +73,20 @@ class RanobeDbProvider {
         .toList();
 
     final authors = <String>{};
+    final illustrators = <String>{};
     for (final edition in (book['editions'] as List<dynamic>? ?? [])) {
       final staff =
           (edition as Map<String, dynamic>)['staff'] as List<dynamic>? ?? [];
       for (final entry in staff) {
         final map = entry as Map<String, dynamic>;
-        if (map['role_type'] != 'author') continue;
         final name = (map['name'] as String?) ?? (map['romaji'] as String?);
-        if (name != null && name.isNotEmpty) authors.add(name);
+        if (name == null || name.isEmpty) continue;
+        switch (map['role_type']) {
+          case 'author':
+            authors.add(name);
+          case 'illustrator':
+            illustrators.add(name);
+        }
       }
     }
 
@@ -87,6 +97,7 @@ class RanobeDbProvider {
       isbn13: isbn13,
       title: title,
       authors: authors.toList(),
+      illustrators: illustrators.toList(),
       publisher: publishers.isEmpty ? null : publishers.join(', '),
       publishedDate: book['c_release_date']?.toString(),
       description: (book['description'] as String?)?.trim(),

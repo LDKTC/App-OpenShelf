@@ -30,7 +30,16 @@ library, stored locally on-device in SQLite.
   cover into a reusable preset (a book can have several; one is active at
   a time) from the book detail screen, or promote its existing API
   thumbnail into a preset instead of rescanning it. Presets can be edited
-  afterward — skip a slot now and scan it in later.
+  afterward — skip a slot now and scan it in later. Capture uses Google
+  Play services' document scanner instead of a plain camera shot, so the
+  page is auto-detected, straightened, and cropped before it's saved.
+- **Scan-to-fill book fields**: a scan button next to Title, Authors,
+  Illustrators, ISBN, and Publisher in the book editor photographs that
+  text and runs OCR on it. The recognized text is always shown back to you
+  in an editable review dialog first — nothing is written into the field
+  until you approve it (editing it first if needed). See
+  [OCR text scanning](#ocr-text-scanning) below for the on-device vs. Cloud
+  Vision tradeoff.
 - **Saved pages**: photograph a page or illustration inside a book and
   keep it as an in-app reminder, with an optional label and note.
 - **Reading-status stamps**: a timeline of `reading` / `finished` /
@@ -55,10 +64,15 @@ library, stored locally on-device in SQLite.
 - `sqflite` for local storage
 - `mobile_scanner` for barcode scanning + `permission_handler` for the
   camera permission
-- `image_picker` for cover/spine/page photo capture
+- `image_picker` for cover/spine/page photo capture, and the OCR-scan
+  photo source in the book editor
+- `google_mlkit_document_scanner` for cover/spine/back capture (auto edge
+  detection, perspective correction, cropping)
+- `google_mlkit_text_recognition` for on-device OCR (default; Latin script
+  only), with an optional Cloud Vision API fallback for Thai text
 - `provider` for state management
 - `http` + `xml` for metadata lookups (Google Books JSON, Open Library
-  JSON, NLT Alma MARCXML-over-SRU)
+  JSON, NLT Alma MARCXML-over-SRU) and the optional Cloud Vision OCR call
 - `package_info_plus` + `path_provider` for the in-app updater (current
   version check, downloaded-APK staging)
 
@@ -71,10 +85,13 @@ lib/
   services/
     database_service.dart       sqflite schema + CRUD
     isbn_utils.dart             ISBN validation/normalization, Thai-ISBN detection
-    settings_service.dart       persisted app settings (NLT SRU URL, shelf display mode)
+    settings_service.dart       persisted app settings (NLT SRU URL, Cloud Vision
+                                 API key, shelf display mode)
     book_metadata_service.dart  orchestrates provider lookup order
     book_lookup_service.dart    shared ISBN -> existing book/metadata/not-found resolution
     metadata_providers/         google_books, open_library, nlt_alma_sru, ranobedb
+    document_scanner_service.dart  cover/spine/back capture via the ML Kit document scanner
+    ocr_service.dart            scan-to-fill OCR: Cloud Vision if configured, else on-device
     image_storage_service.dart  persists scanned cover/page photos on-device
     update_service.dart         checks GitHub Releases, downloads + installs the APK
     apk_installer.dart          platform channel to the native install-APK intent
@@ -144,6 +161,27 @@ Google Books and Open Library — Thai lookups just won't be as complete. If a
 scanned Thai ISBN (978-616 / 978-974) has no match anywhere and the SRU URL
 isn't configured yet, the Scan screen says so explicitly and offers a button
 straight to Settings, instead of just reporting a generic "not found".
+
+## OCR text scanning
+
+The scan buttons next to Title, Authors, Illustrators, ISBN, and Publisher
+in the book editor photograph that text and run OCR on it, then always show
+the recognized text back to you in an editable dialog before it's applied —
+scanning never silently overwrites a field.
+
+By default this uses Google ML Kit's on-device text recognizer: free,
+offline, and fast, but it only reads Latin-script text — Thai titles and
+credits will come back empty or garbled. To get accurate Thai (and Latin)
+recognition instead:
+
+1. Create a Google Cloud Vision API key (Cloud Console → APIs & Services →
+   Credentials, with the Cloud Vision API enabled on that project).
+2. In the app, go to **Settings** and enter it under **Text scanning
+   (OCR)**.
+
+Once set, every OCR scan is sent to the Cloud Vision API instead of running
+on-device, billed to that key's Cloud project. Clear the field to go back
+to on-device recognition.
 
 ## App updates
 
