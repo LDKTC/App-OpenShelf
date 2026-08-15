@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/stamp.dart';
 import '../state/library_provider.dart';
 import 'status_chip.dart';
@@ -17,6 +18,7 @@ class StampTimeline extends StatelessWidget {
   Widget build(BuildContext context) {
     final library = context.watch<LibraryProvider>();
     final stamps = library.stampsFor(bookId);
+    final t = AppLocalizations.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -24,11 +26,11 @@ class StampTimeline extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Reading timeline', style: Theme.of(context).textTheme.labelLarge),
+            Text(t.readingTimelineTitle, style: Theme.of(context).textTheme.labelLarge),
             TextButton.icon(
               onPressed: () => showStampEditorDialog(context, bookId: bookId),
               icon: const Icon(Icons.add, size: 18),
-              label: const Text('Add stamp'),
+              label: Text(t.addStamp),
             ),
           ],
         ),
@@ -36,8 +38,7 @@ class StampTimeline extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 4, bottom: 8),
             child: Text(
-              'No stamps yet. Add one when you start, pause, drop, or finish '
-              'this book.',
+              t.noStampsYet,
               style: Theme.of(context).textTheme.bodySmall,
             ),
           )
@@ -55,7 +56,8 @@ class _StampTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (color, icon, label) = stampVisuals(stamp.type);
+    final (color, icon, label) =
+        stampVisuals(AppLocalizations.of(context), stamp.type);
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: CircleAvatar(
@@ -89,19 +91,21 @@ class _StampTile extends StatelessWidget {
 
   Future<void> _confirmDelete(BuildContext context, ReadingStamp stamp) async {
     final library = context.read<LibraryProvider>();
+    final t = AppLocalizations.of(context);
+    final (_, __, statusLabel) = stampVisuals(t, stamp.type);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete stamp?'),
-        content: Text('Remove this "${stamp.type.label}" stamp from the timeline?'),
+        title: Text(t.deleteStampTitle),
+        content: Text(t.removeStampConfirm(statusLabel)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(t.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete'),
+            child: Text(t.delete),
           ),
         ],
       ),
@@ -194,8 +198,9 @@ class _StampEditorDialogState extends State<_StampEditorDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return AlertDialog(
-      title: Text(_isEditing ? 'Edit stamp' : 'Add stamp'),
+      title: Text(_isEditing ? t.editStamp : t.addStamp),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -207,7 +212,7 @@ class _StampEditorDialogState extends State<_StampEditorDialog> {
               children: [
                 for (final type in StampType.values)
                   ChoiceChip(
-                    label: Text(type.label),
+                    label: Text(stampVisuals(t, type).$3),
                     selected: _type == type,
                     onSelected: (_) => setState(() => _type = type),
                   ),
@@ -217,14 +222,14 @@ class _StampEditorDialogState extends State<_StampEditorDialog> {
             InkWell(
               onTap: _pickDateTime,
               child: InputDecorator(
-                decoration: const InputDecoration(labelText: 'When'),
+                decoration: InputDecoration(labelText: t.whenField),
                 child: Text(formatStampTimestamp(_timestamp)),
               ),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _note,
-              decoration: const InputDecoration(labelText: 'Note (optional)'),
+              decoration: InputDecoration(labelText: t.noteField),
               maxLines: 2,
             ),
           ],
@@ -233,9 +238,9 @@ class _StampEditorDialogState extends State<_StampEditorDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(t.cancel),
         ),
-        FilledButton(onPressed: _save, child: const Text('Save')),
+        FilledButton(onPressed: _save, child: Text(t.save)),
       ],
     );
   }

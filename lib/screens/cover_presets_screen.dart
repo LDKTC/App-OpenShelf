@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/book.dart';
 import '../models/cover_preset.dart';
 import '../services/image_storage_service.dart';
@@ -21,9 +22,10 @@ class CoverPresetsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final library = context.watch<LibraryProvider>();
     final presets = library.coverPresetsFor(book.id!);
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Book covers')),
+      appBar: AppBar(title: Text(t.bookCoversTitle)),
       body: presets.isEmpty
           ? const _EmptyState()
           : ListView.separated(
@@ -38,7 +40,7 @@ class CoverPresetsScreen extends StatelessWidget {
           MaterialPageRoute(builder: (_) => CoverScanScreen(book: book)),
         ),
         icon: const Icon(Icons.add_a_photo_outlined),
-        label: const Text('Scan new preset'),
+        label: Text(t.scanNewPresetLabel),
       ),
     );
   }
@@ -49,6 +51,7 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -62,8 +65,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'No scanned covers yet. Scan the front cover and spine to '
-              'show this book as artwork on your shelf.',
+              t.noCoversYet,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
@@ -92,24 +94,27 @@ class _PresetCard extends StatelessWidget {
     final controller = TextEditingController(text: preset.label ?? '');
     final newLabel = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Rename preset'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(labelText: 'Label'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
+      builder: (ctx) {
+        final t = AppLocalizations.of(ctx);
+        return AlertDialog(
+          title: Text(t.renamePresetTitle),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: InputDecoration(labelText: t.renamePresetLabelField),
           ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(t.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(controller.text),
+              child: Text(t.save),
+            ),
+          ],
+        );
+      },
     );
     if (newLabel != null) {
       await library.renameCoverPreset(preset, newLabel);
@@ -119,23 +124,23 @@ class _PresetCard extends StatelessWidget {
   Future<void> _confirmDelete(BuildContext context, LibraryProvider library) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete preset?'),
-        content: Text(
-          'Delete "${preset.label ?? 'this cover preset'}"? Its photos will '
-          'be removed too.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      builder: (ctx) {
+        final t = AppLocalizations.of(ctx);
+        return AlertDialog(
+          title: Text(t.deletePresetTitle),
+          content: Text(t.deletePresetConfirm(preset.label ?? t.thisCoverPreset)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(t.cancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(t.delete),
+            ),
+          ],
+        );
+      },
     );
     if (confirmed == true) {
       await library.deleteCoverPreset(preset);
@@ -145,6 +150,7 @@ class _PresetCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final library = context.read<LibraryProvider>();
+    final t = AppLocalizations.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -155,16 +161,16 @@ class _PresetCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    preset.label ?? 'Untitled preset',
+                    preset.label ?? t.untitledPresetLabel,
                     style: Theme.of(context).textTheme.titleSmall,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (preset.isActive)
-                  const Padding(
-                    padding: EdgeInsets.only(left: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8),
                     child: Chip(
-                      label: Text('On shelf'),
+                      label: Text(t.onShelfLabel),
                       visualDensity: VisualDensity.compact,
                     ),
                   ),
@@ -176,18 +182,18 @@ class _PresetCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
               child: Row(
                 children: [
-                  _Thumb(path: preset.frontImagePath, label: 'Front'),
+                  _Thumb(path: preset.frontImagePath, label: t.coverThumbFront),
                   const SizedBox(width: 8),
-                  _Thumb(path: preset.spineImagePath, label: 'Spine'),
+                  _Thumb(path: preset.spineImagePath, label: t.coverThumbSpine),
                   const SizedBox(width: 8),
-                  _Thumb(path: preset.backImagePath, label: 'Back'),
+                  _Thumb(path: preset.backImagePath, label: t.coverThumbBack),
                 ],
               ),
             ),
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
-                'Tap the photos to add or replace any of them.',
+                t.tapPhotosHint,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
@@ -198,17 +204,17 @@ class _PresetCard extends StatelessWidget {
                   TextButton(
                     onPressed: () =>
                         library.setActiveCoverPreset(preset.bookId, preset.id!),
-                    child: const Text('Use on shelf'),
+                    child: Text(t.useOnShelfLabel),
                   ),
                 IconButton(
                   icon: const Icon(Icons.drive_file_rename_outline, size: 20),
                   onPressed: () => _rename(context, library),
-                  tooltip: 'Rename',
+                  tooltip: t.renameTooltip,
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete_outline, size: 20),
                   onPressed: () => _confirmDelete(context, library),
-                  tooltip: 'Delete',
+                  tooltip: t.delete,
                 ),
               ],
             ),

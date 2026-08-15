@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
+import 'l10n/app_localizations.dart';
 import 'screens/home_screen.dart';
 import 'state/library_provider.dart';
 import 'theme.dart';
@@ -16,10 +18,22 @@ class QuetzaLibApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => LibraryProvider()..loadAll(),
-      child: MaterialApp(
-        title: 'QuetzaLib',
-        theme: buildAppTheme(),
-        home: const HomeScreen(),
+      child: Consumer<LibraryProvider>(
+        builder: (context, library, _) {
+          return MaterialApp(
+            title: 'QuetzaLib',
+            theme: buildAppTheme(),
+            locale: library.appLocale.locale,
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            home: const HomeScreen(),
+          );
+        },
       ),
     );
   }

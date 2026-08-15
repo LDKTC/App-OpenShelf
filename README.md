@@ -125,10 +125,19 @@ as a GitHub Release with the APK attached, either:
 - manually, via the "Run workflow" button on the Release workflow in the
   Actions tab, entering a tag name.
 
-The release build is signed with the Flutter debug keystore (see
-`android/app/build.gradle.kts`), same as `flutter build apk --release`
-locally — fine for prototype distribution, but replace it with a real
-signing config before a production/Play Store release.
+The release build is signed with a shared keystore committed at
+`android/app/release-keystore.jks` (configured via `android/key.properties`,
+loaded by `android/app/build.gradle.kts`), so every build — CI or local —
+signs with the same certificate. This matters because Android refuses to
+install an "update" APK signed with a different certificate than the one
+already on the device ("App not installed as package conflicts with an
+existing package"); before this, every CI run signed with a freshly
+auto-generated debug keystore, so no two release builds shared a
+certificate. This is still not a production-grade key — replace it with a
+real, unshared signing config before a production/Play Store release. If
+you've already got a build installed from before this change, you'll need
+to uninstall it once before an update signed with the new shared key will
+install.
 
 ## OCR text scanning
 

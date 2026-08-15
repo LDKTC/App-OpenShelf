@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/app_update_info.dart';
 import '../services/settings_service.dart';
 import '../services/update_service.dart';
+import '../state/library_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -41,7 +44,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         .setCloudVisionApiKey(_visionApiKeyController.text);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Saved.')),
+        SnackBar(content: Text(AppLocalizations.of(context).saved)),
       );
     }
   }
@@ -52,18 +55,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _updateStatus = null;
       _availableUpdate = null;
     });
+    final t = AppLocalizations.of(context);
     try {
       final current = await _updateService.currentVersion();
       final update = await _updateService.checkForUpdate();
       setState(() {
         _currentVersion = current;
         _availableUpdate = update;
-        _updateStatus = update == null
-            ? "You're up to date (v$current)."
-            : 'Update available: v${update.version}';
+        _updateStatus =
+            update == null ? t.upToDate(current) : t.updateAvailable(update.version);
       });
     } catch (e) {
-      setState(() => _updateStatus = 'Could not check for updates: $e');
+      setState(() => _updateStatus = t.couldNotCheckForUpdates('$e'));
     } finally {
       if (mounted) setState(() => _checkingUpdate = false);
     }
@@ -87,7 +90,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Update failed: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context).updateFailed('$e'))),
         );
       }
     } finally {
@@ -104,28 +107,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final library = context.watch<LibraryProvider>();
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(t.settingsTitle)),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
                 Text(
-                  'Text scanning (OCR)',
+                  t.languageSectionTitle,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'The camera-scan buttons next to Title, Authors, '
-                  'Illustrators, ISBN, and Publisher in the book editor use '
-                  'on-device text recognition by default — free and '
-                  'offline, but Latin-script only, so Thai text won\'t be '
-                  'read correctly. Enter a Google Cloud Vision API key here '
-                  'to use it instead: it reads Thai as well as Latin text, '
-                  'at the cost of a network request per scan billed to your '
-                  'Cloud account. Leave it blank to keep using on-device '
-                  'recognition.',
+                  t.languageSectionBody,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 16),
+                SegmentedButton<AppLocale>(
+                  segments: [
+                    for (final locale in AppLocale.values)
+                      ButtonSegment(value: locale, label: Text(locale.label(t))),
+                  ],
+                  selected: {library.appLocale},
+                  onSelectionChanged: (selected) =>
+                      library.setAppLocale(selected.first),
+                ),
+                const Divider(height: 40),
+                Text(
+                  t.ocrSectionTitle,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  t.ocrSectionBody,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 16),
@@ -133,7 +150,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   controller: _visionApiKeyController,
                   obscureText: _visionKeyObscured,
                   decoration: InputDecoration(
-                    labelText: 'Cloud Vision API key (optional)',
+                    labelText: t.cloudVisionKeyField,
                     suffixIcon: IconButton(
                       icon: Icon(
                         _visionKeyObscured
@@ -149,19 +166,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 12),
                 FilledButton(
                   onPressed: _saveVisionApiKey,
-                  child: const Text('Save'),
+                  child: Text(t.save),
                 ),
                 const Divider(height: 40),
                 Text(
-                  'App update',
+                  t.appUpdateSectionTitle,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'QuetzaLib isn\'t distributed through the Play Store, so '
-                  'updates are installed the same way as the first install: '
-                  'downloading the latest APK and installing it over this '
-                  'app. Your books and settings are kept.',
+                  t.appUpdateSectionBody,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 12),
@@ -175,7 +189,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               height: 16,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('Check for updates'),
+                          : Text(t.checkForUpdates),
                     ),
                     if (_availableUpdate != null) ...[
                       const SizedBox(width: 12),
@@ -183,8 +197,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         onPressed: _downloading ? null : _downloadAndInstall,
                         child: Text(
                           _downloading
-                              ? 'Downloading… ${(_downloadProgress * 100).round()}%'
-                              : 'Download & install',
+                              ? t.downloading(
+                                  (_downloadProgress * 100).round().toString())
+                              : t.downloadAndInstall,
                         ),
                       ),
                     ],
@@ -210,7 +225,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 if (_currentVersion != null) ...[
                   const SizedBox(height: 12),
                   Text(
-                    'Current version: $_currentVersion',
+                    t.currentVersion(_currentVersion!),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],

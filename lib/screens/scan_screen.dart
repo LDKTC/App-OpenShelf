@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/book_metadata.dart';
 import '../services/book_lookup_service.dart';
 import '../services/isbn_utils.dart';
@@ -64,7 +65,7 @@ class _ScanScreenState extends State<ScanScreen> {
 
     setState(() {
       _busy = true;
-      _statusMessage = 'Looking up $raw...';
+      _statusMessage = AppLocalizations.of(context).lookingUpIsbn(raw);
       _searchMissIsbn13 = null;
       _searchMissMetadata = null;
     });
@@ -109,14 +110,13 @@ class _ScanScreenState extends State<ScanScreen> {
       _busy = false;
       _searchMissMetadata = metadata;
       _searchMissIsbn13 = isbn13;
-      _statusMessage = 'No book with ISBN $isbn13 in your library.';
+      _statusMessage = AppLocalizations.of(context).noBookWithIsbn(isbn13);
     });
   }
 
   Future<void> _handleAddNotFound(String isbn13) async {
     setState(() {
-      _statusMessage =
-          'No metadata found for $isbn13. You can still add it manually.';
+      _statusMessage = AppLocalizations.of(context).noMetadataAddManually(isbn13);
     });
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
@@ -153,9 +153,10 @@ class _ScanScreenState extends State<ScanScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isSearch ? 'Scan to search' : 'Scan ISBN'),
+        title: Text(_isSearch ? t.scanToSearchTitle : t.scanIsbnTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.flash_on),
@@ -202,12 +203,12 @@ class _ScanScreenState extends State<ScanScreen> {
                           children: [
                             TextButton(
                               onPressed: _scanAgain,
-                              child: const Text('Scan again'),
+                              child: Text(t.scanAgain),
                             ),
                             const SizedBox(width: 8),
                             FilledButton(
                               onPressed: _addSearchMissToLibrary,
-                              child: const Text('Add to library'),
+                              child: Text(t.addToLibrary),
                             ),
                           ],
                         ),
@@ -226,9 +227,7 @@ class _ScanScreenState extends State<ScanScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Text(
-                    _isSearch
-                        ? 'Scan a book already on your shelf to jump to it.'
-                        : 'Point the camera at the barcode on the back of the book.',
+                    _isSearch ? t.scanToSearchHint : t.scanIsbnHint,
                     textAlign: TextAlign.center,
                   ),
                 ),

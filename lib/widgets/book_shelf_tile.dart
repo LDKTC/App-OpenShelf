@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -50,11 +51,17 @@ class BookShelfTile extends StatelessWidget {
 }
 
 class _PresetImage extends StatelessWidget {
-  const _PresetImage({required this.path, required this.book, required this.mode});
+  const _PresetImage({
+    required this.path,
+    required this.book,
+    required this.mode,
+    this.fit = BoxFit.cover,
+  });
 
   final String path;
   final Book book;
   final ShelfDisplayMode mode;
+  final BoxFit fit;
 
   @override
   Widget build(BuildContext context) {
@@ -62,16 +69,167 @@ class _PresetImage extends StatelessWidget {
     if (isRemoteImagePath(path)) {
       return Image.network(
         path,
-        fit: BoxFit.cover,
+        fit: fit,
         errorBuilder: (context, error, stackTrace) => fallback,
       );
     }
     return Image.file(
       File(path),
-      fit: BoxFit.cover,
+      fit: fit,
       errorBuilder: (context, error, stackTrace) => fallback,
     );
   }
+}
+
+/// The spine shelf's "many books in a row" layout: each book's spine
+/// renders at a shared height but at its own natural width (derived from
+/// the image's actual pixel aspect ratio), so a thick book's spine is
+/// visibly wider than a thin one instead of every spine being squashed
+/// into the same fixed-ratio cell.
+class SpineShelfView extends StatelessWidget {
+  const SpineShelfView({
+    super.key,
+    required this.books,
+    required this.presetFor,
+    required this.onTapBook,
+  });
+
+  final List<Book> books;
+  final BookCoverPreset? Function(int bookId) presetFor;
+  final void Function(int bookId) onTapBook;
+
+  static const double rowHeight = 180;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(12),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 12,
+        children: [
+          for (final book in books)
+            _SpineTile(
+              key: ValueKey(book.id),
+              book: book,
+              path: presetFor(book.id!)?.spineImagePath,
+              height: rowHeight,
+              onTap: () => onTapBook(book.id!),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SpineTile extends StatefulWidget {
+  const _SpineTile({
+    super.key,
+    required this.book,
+    required this.path,
+    required this.height,
+    required this.onTap,
+  });
+
+  final Book book;
+  final String? path;
+  final double height;
+  final VoidCallback onTap;
+
+  @override
+  State<_SpineTile> createState() => _SpineTileState();
+}
+
+class _SpineTileState extends State<_SpineTile> {
+  static const _fallbackAspect = 0.22;
+
+  Size? _size;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSize();
+  }
+
+  @override
+  void didUpdateWidget(covariant _SpineTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.path != widget.path) _loadSize();
+  }
+
+  void _loadSize() {
+    final path = widget.path;
+    if (path == null) {
+      setState(() => _size = null);
+      return;
+    }
+    resolveImageSize(path).then((size) {
+      if (mounted) setState(() => _size = size);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = _size;
+    final aspect =
+        (size != null && size.height > 0) ? size.width / size.height : _fallbackAspect;
+    final width = (widget.height * aspect).clamp(28.0, widget.height * 0.6);
+
+    return SizedBox(
+      width: width,
+      height: widget.height,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.onTap,
+          borderRadius: BorderRadius.circular(4),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: widget.path == null
+                ? _InfoFallback(book: widget.book, mode: ShelfDisplayMode.spine)
+                : _PresetImage(
+                    path: widget.path!,
+                    book: widget.book,
+                    mode: ShelfDisplayMode.spine,
+                    fit: BoxFit.contain,
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+final _imageSizeCache = <String, Size>{};
+
+/// Resolves the intrinsic pixel size of a local or remote image, caching
+/// the result by path/URL so the same spine image is only decoded once per
+/// app session (image bytes themselves are still cached by Flutter's
+/// [ImageCache], so this just avoids redundant [ImageStreamListener]
+/// round-trips on every rebuild/scroll).
+Future<Size?> resolveImageSize(String path) {
+  final cached = _imageSizeCache[path];
+  if (cached != null) return Future.value(cached);
+
+  final provider =
+      isRemoteImagePath(path) ? NetworkImage(path) : FileImage(File(path)) as ImageProvider;
+  final completer = Completer<Size?>();
+  final stream = provider.resolve(const ImageConfiguration());
+  late final ImageStreamListener listener;
+  listener = ImageStreamListener(
+    (info, _) {
+      final size = Size(info.image.width.toDouble(), info.image.height.toDouble());
+      _imageSizeCache[path] = size;
+      stream.removeListener(listener);
+      if (!completer.isCompleted) completer.complete(size);
+    },
+    onError: (error, stackTrace) {
+      stream.removeListener(listener);
+      if (!completer.isCompleted) completer.complete(null);
+    },
+  );
+  stream.addListener(listener);
+  return completer.future;
 }
 
 class _InfoFallback extends StatelessWidget {

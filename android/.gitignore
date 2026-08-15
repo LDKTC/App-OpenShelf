@@ -12,3 +12,12 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# QuetzaLib is sideloaded via GitHub Releases (see README), not the Play
+# Store, so app/release-keystore.jks and key.properties are deliberately
+# committed: every build (local or CI) must sign with the same certificate,
+# or installing an "update" build fails as a signature conflict with the
+# already-installed app. This is not a production signing key -- replace it
+# with a real, unshared one before any Play Store release.
+!key.properties
+!app/release-keystore.jks

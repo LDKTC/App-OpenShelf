@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../state/library_provider.dart';
 
 class CategoryManagerScreen extends StatelessWidget {
@@ -10,21 +11,24 @@ class CategoryManagerScreen extends StatelessWidget {
     final controller = TextEditingController();
     final name = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('New category'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(labelText: 'Name'),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
-            child: const Text('Add'),
+      builder: (ctx) {
+        final t = AppLocalizations.of(ctx);
+        return AlertDialog(
+          title: Text(t.newCategoryTitle),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: InputDecoration(labelText: t.categoryNameField),
           ),
-        ],
-      ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(t.cancel)),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
+              child: Text(t.add),
+            ),
+          ],
+        );
+      },
     );
     if (name != null && name.isNotEmpty && context.mounted) {
       await context.read<LibraryProvider>().addCategory(name);
@@ -35,17 +39,20 @@ class CategoryManagerScreen extends StatelessWidget {
     final controller = TextEditingController(text: currentName);
     final name = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Rename category'),
-        content: TextField(controller: controller, autofocus: true),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+      builder: (ctx) {
+        final t = AppLocalizations.of(ctx);
+        return AlertDialog(
+          title: Text(t.renameCategoryTitle),
+          content: TextField(controller: controller, autofocus: true),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(t.cancel)),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
+              child: Text(t.save),
+            ),
+          ],
+        );
+      },
     );
     if (name != null && name.isNotEmpty && context.mounted) {
       final library = context.read<LibraryProvider>();
@@ -57,10 +64,11 @@ class CategoryManagerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final library = context.watch<LibraryProvider>();
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Categories'),
+        title: Text(t.categoryManagerTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -69,7 +77,7 @@ class CategoryManagerScreen extends StatelessWidget {
         ],
       ),
       body: library.categories.isEmpty
-          ? const Center(child: Text('No categories yet. Tap + to add one.'))
+          ? Center(child: Text(t.noCategoriesYet))
           : ListView.separated(
               itemCount: library.categories.length,
               separatorBuilder: (_, __) => const Divider(height: 1),

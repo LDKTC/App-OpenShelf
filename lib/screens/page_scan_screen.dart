@@ -4,10 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/book.dart';
 import '../models/book_page.dart';
+import '../services/document_scanner_service.dart';
 import '../services/image_storage_service.dart';
 import '../state/library_provider.dart';
+
+enum _PageSource { scan, gallery }
 
 /// Captures (or picks from the gallery) a photo of a page or illustration
 /// inside [book] and saves it as a [BookPage] "reminder" — something the
@@ -23,6 +27,7 @@ class PageScanScreen extends StatefulWidget {
 
 class _PageScanScreenState extends State<PageScanScreen> {
   final _picker = ImagePicker();
+  final _documentScanner = DocumentScannerService();
   final _labelController = TextEditingController();
   final _noteController = TextEditingController();
 
@@ -37,30 +42,54 @@ class _PageScanScreenState extends State<PageScanScreen> {
   }
 
   Future<void> _showSourceSheet() async {
-    final source = await showModalBottomSheet<ImageSource>(
+    final t = AppLocalizations.of(context);
+    final source = await showModalBottomSheet<_PageSource>(
       context: context,
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.camera_alt_outlined),
-              title: const Text('Take photo'),
-              onTap: () => Navigator.of(ctx).pop(ImageSource.camera),
+              leading: const Icon(Icons.document_scanner_outlined),
+              title: Text(t.scanDocument),
+              subtitle: Text(t.scanDocumentSubtitle),
+              onTap: () => Navigator.of(ctx).pop(_PageSource.scan),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Choose from gallery'),
-              onTap: () => Navigator.of(ctx).pop(ImageSource.gallery),
+              title: Text(t.chooseFromGallery),
+              onTap: () => Navigator.of(ctx).pop(_PageSource.gallery),
             ),
           ],
         ),
       ),
     );
     if (source == null) return;
-    final file = await _picker.pickImage(source: source, imageQuality: 85);
+
+    if (source == _PageSource.scan) {
+      await _scanDocument();
+      return;
+    }
+
+    final file =
+        await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
     if (file == null || !mounted) return;
     setState(() => _file = file);
+  }
+
+  Future<void> _scanDocument() async {
+    String? path;
+    try {
+      path = await _documentScanner.scanSinglePage();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).documentScanFailed('$e'))),
+      );
+      return;
+    }
+    if (path == null || !mounted) return;
+    setState(() => _file = XFile(path!));
   }
 
   Future<void> _save() async {
@@ -90,9 +119,10 @@ class _PageScanScreenState extends State<PageScanScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Save a page'),
+        title: Text(t.savePageTitle),
         actions: [
           TextButton(
             onPressed: _file != null && !_saving ? _save : null,
@@ -102,7 +132,7 @@ class _PageScanScreenState extends State<PageScanScreen> {
                     height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Save'),
+                : Text(t.save),
           ),
         ],
       ),
@@ -110,8 +140,7 @@ class _PageScanScreenState extends State<PageScanScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           Text(
-            'Photograph a page or illustration to keep as a reminder inside '
-            'the app.',
+            t.savePageHint,
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 16),
@@ -134,15 +163,15 @@ class _PageScanScreenState extends State<PageScanScreen> {
           const SizedBox(height: 16),
           TextField(
             controller: _labelController,
-            decoration: const InputDecoration(
-              labelText: 'Page label (optional)',
-              hintText: 'e.g. p.128 or "map illustration"',
+            decoration: InputDecoration(
+              labelText: t.pageLabelField,
+              hintText: t.pageLabelHint,
             ),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _noteController,
-            decoration: const InputDecoration(labelText: 'Note (optional)'),
+            decoration: InputDecoration(labelText: t.noteField),
             maxLines: 3,
           ),
         ],

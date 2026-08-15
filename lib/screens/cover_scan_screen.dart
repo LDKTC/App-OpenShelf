@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/book.dart';
 import '../models/cover_preset.dart';
 import '../services/document_scanner_service.dart';
@@ -13,10 +14,10 @@ import '../state/library_provider.dart';
 enum _CoverSlot { front, spine, back }
 
 extension on _CoverSlot {
-  String get label => switch (this) {
-        _CoverSlot.front => 'Front cover',
-        _CoverSlot.spine => 'Spine',
-        _CoverSlot.back => 'Back cover',
+  String label(AppLocalizations t) => switch (this) {
+        _CoverSlot.front => t.coverSlotFront,
+        _CoverSlot.spine => t.coverSlotSpine,
+        _CoverSlot.back => t.coverSlotBack,
       };
 }
 
@@ -98,6 +99,7 @@ class _CoverScanScreenState extends State<CoverScanScreen> {
       widget.book.thumbnailUrl != null && !_frontIsApiCoverAlready;
 
   Future<void> _pickImage(_CoverSlot slot) async {
+    final t = AppLocalizations.of(context);
     final source = await showModalBottomSheet<_CoverSource>(
       context: context,
       builder: (ctx) => SafeArea(
@@ -106,13 +108,13 @@ class _CoverScanScreenState extends State<CoverScanScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.document_scanner_outlined),
-              title: const Text('Scan document'),
-              subtitle: const Text('Auto-crops and straightens the page'),
+              title: Text(t.scanDocument),
+              subtitle: Text(t.scanDocumentSubtitle),
               onTap: () => Navigator.of(ctx).pop(_CoverSource.scan),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Choose from gallery'),
+              title: Text(t.chooseFromGallery),
               onTap: () => Navigator.of(ctx).pop(_CoverSource.gallery),
             ),
           ],
@@ -144,7 +146,7 @@ class _CoverScanScreenState extends State<CoverScanScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Document scan failed: $e')),
+        SnackBar(content: Text(AppLocalizations.of(context).documentScanFailed('$e'))),
       );
       return;
     }
@@ -242,9 +244,10 @@ class _CoverScanScreenState extends State<CoverScanScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditing ? 'Edit cover preset' : 'Scan cover'),
+        title: Text(_isEditing ? t.editCoverPresetTitle : t.scanCoverTitle),
         actions: [
           TextButton(
             onPressed: _hasAnyImage && !_saving ? _save : null,
@@ -254,7 +257,7 @@ class _CoverScanScreenState extends State<CoverScanScreen> {
                     height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Save'),
+                : Text(t.save),
           ),
         ],
       ),
@@ -262,9 +265,7 @@ class _CoverScanScreenState extends State<CoverScanScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           Text(
-            'Front cover, spine, and back cover are all optional — skip any '
-            'of them for now and come back to scan the rest into this same '
-            'preset later.',
+            t.coverSlotsHint,
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 16),
@@ -280,7 +281,7 @@ class _CoverScanScreenState extends State<CoverScanScreen> {
               child: OutlinedButton.icon(
                 onPressed: _useApiCoverForFront,
                 icon: const Icon(Icons.cloud_download_outlined, size: 18),
-                label: const Text('Use existing API cover for front'),
+                label: Text(t.useApiCoverForFront),
               ),
             ),
           const SizedBox(height: 16),
@@ -300,9 +301,9 @@ class _CoverScanScreenState extends State<CoverScanScreen> {
           const SizedBox(height: 20),
           TextField(
             controller: _labelController,
-            decoration: const InputDecoration(
-              labelText: 'Preset label (optional)',
-              hintText: 'e.g. Hardcover 2020',
+            decoration: InputDecoration(
+              labelText: t.presetLabelField,
+              hintText: t.presetLabelHint,
             ),
           ),
         ],
@@ -333,7 +334,10 @@ class _SlotTile extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(slot.label, style: Theme.of(context).textTheme.labelLarge),
+        Text(
+          slot.label(AppLocalizations.of(context)),
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
         const SizedBox(height: 8),
         InkWell(
           onTap: onTap,
