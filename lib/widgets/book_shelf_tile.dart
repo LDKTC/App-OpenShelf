@@ -3,25 +3,33 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/book.dart';
 import '../models/cover_preset.dart';
+import '../models/stamp.dart';
 import '../services/image_storage_service.dart';
 import '../services/settings_service.dart';
+import 'status_chip.dart';
 
 /// One book on the visual shelf: its active preset's front-cover or spine
 /// image (depending on [mode]), or — when it has no preset with that image
-/// yet — a text "info" tile standing in for the missing artwork.
+/// yet — a text "info" tile standing in for the missing artwork. Its
+/// current reading status, when it has one, overlays as a small badge —
+/// the shelf views have no room for the list view's full [StatusChip], so
+/// this is their equivalent.
 class BookShelfTile extends StatelessWidget {
   const BookShelfTile({
     super.key,
     required this.book,
     required this.activePreset,
+    this.currentStatus,
     required this.mode,
     required this.onTap,
   });
 
   final Book book;
   final BookCoverPreset? activePreset;
+  final StampType? currentStatus;
   final ShelfDisplayMode mode;
   final VoidCallback onTap;
 
@@ -39,12 +47,49 @@ class BookShelfTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(4),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(4),
-          child: SizedBox.expand(
-            child: path == null
-                ? _InfoFallback(book: book, mode: mode)
-                : _PresetImage(path: path, book: book, mode: mode),
+          child: Stack(
+            children: [
+              SizedBox.expand(
+                child: path == null
+                    ? _InfoFallback(book: book, mode: mode)
+                    : _PresetImage(path: path, book: book, mode: mode),
+              ),
+              if (currentStatus != null)
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: _StatusBadge(type: currentStatus!),
+                ),
+            ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// A small circular badge showing a book's current reading-status icon,
+/// overlaid on its cover/spine artwork in the shelf views.
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({required this.type});
+
+  final StampType type;
+
+  @override
+  Widget build(BuildContext context) {
+    final (color, icon, label) =
+        stampVisuals(AppLocalizations.of(context), type);
+    return Tooltip(
+      message: label,
+      child: Container(
+        width: 20,
+        height: 20,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.black.withValues(alpha: 0.55),
+        ),
+        alignment: Alignment.center,
+        child: Icon(icon, size: 13, color: color),
       ),
     );
   }
@@ -91,11 +136,13 @@ class SpineShelfView extends StatelessWidget {
     super.key,
     required this.books,
     required this.presetFor,
+    this.statusFor,
     required this.onTapBook,
   });
 
   final List<Book> books;
   final BookCoverPreset? Function(int bookId) presetFor;
+  final StampType? Function(int bookId)? statusFor;
   final void Function(int bookId) onTapBook;
 
   static const double rowHeight = 180;
@@ -113,6 +160,7 @@ class SpineShelfView extends StatelessWidget {
               key: ValueKey(book.id),
               book: book,
               path: presetFor(book.id!)?.spineImagePath,
+              currentStatus: statusFor?.call(book.id!),
               height: rowHeight,
               onTap: () => onTapBook(book.id!),
             ),
@@ -127,12 +175,14 @@ class _SpineTile extends StatefulWidget {
     super.key,
     required this.book,
     required this.path,
+    this.currentStatus,
     required this.height,
     required this.onTap,
   });
 
   final Book book;
   final String? path;
+  final StampType? currentStatus;
   final double height;
   final VoidCallback onTap;
 
@@ -185,14 +235,27 @@ class _SpineTileState extends State<_SpineTile> {
           borderRadius: BorderRadius.circular(4),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(4),
-            child: widget.path == null
-                ? _InfoFallback(book: widget.book, mode: ShelfDisplayMode.spine)
-                : _PresetImage(
-                    path: widget.path!,
-                    book: widget.book,
-                    mode: ShelfDisplayMode.spine,
-                    fit: BoxFit.contain,
+            child: Stack(
+              children: [
+                SizedBox.expand(
+                  child: widget.path == null
+                      ? _InfoFallback(
+                          book: widget.book, mode: ShelfDisplayMode.spine)
+                      : _PresetImage(
+                          path: widget.path!,
+                          book: widget.book,
+                          mode: ShelfDisplayMode.spine,
+                          fit: BoxFit.contain,
+                        ),
+                ),
+                if (widget.currentStatus != null)
+                  Positioned(
+                    top: 2,
+                    right: 2,
+                    child: _StatusBadge(type: widget.currentStatus!),
                   ),
+              ],
+            ),
           ),
         ),
       ),
