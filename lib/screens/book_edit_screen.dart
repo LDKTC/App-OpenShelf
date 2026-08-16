@@ -37,6 +37,7 @@ class _BookEditScreenState extends State<BookEditScreen> {
   late final TextEditingController _authors;
   late final TextEditingController _illustrators;
   late final TextEditingController _series;
+  late final TextEditingController _seriesVolume;
   late final TextEditingController _publisher;
   late final TextEditingController _publishedDate;
   late final TextEditingController _isbn13;
@@ -68,6 +69,8 @@ class _BookEditScreenState extends State<BookEditScreen> {
           .join(', '),
     );
     _series = TextEditingController(text: book?.series ?? '');
+    _seriesVolume =
+        TextEditingController(text: book?.seriesVolume?.toString() ?? '');
     _publisher = TextEditingController(text: book?.publisher ?? metadata?.publisher ?? '');
     _publishedDate = TextEditingController(
       text: book?.publishedDate ?? metadata?.publishedDate ?? '',
@@ -97,6 +100,7 @@ class _BookEditScreenState extends State<BookEditScreen> {
     _authors.dispose();
     _illustrators.dispose();
     _series.dispose();
+    _seriesVolume.dispose();
     _publisher.dispose();
     _publishedDate.dispose();
     _isbn13.dispose();
@@ -129,6 +133,7 @@ class _BookEditScreenState extends State<BookEditScreen> {
       authors: authors,
       illustrators: illustrators,
       series: _series.text.trim().isEmpty ? null : _series.text.trim(),
+      seriesVolume: int.tryParse(_seriesVolume.text.trim()),
       publisher: _publisher.text.trim().isEmpty ? null : _publisher.text.trim(),
       publishedDate: _publishedDate.text.trim().isEmpty ? null : _publishedDate.text.trim(),
       description: _description.text.trim().isEmpty ? null : _description.text.trim(),
@@ -230,8 +235,9 @@ class _BookEditScreenState extends State<BookEditScreen> {
                   child: Image.network(_thumbnailUrl!, height: 140),
                 ),
               ),
-            TextFormField(
+            SuggestionTextField(
               controller: _title,
+              suggestions: library.knownTitles,
               decoration: InputDecoration(
                 labelText: t.titleField,
                 suffixIcon: _scanButton(t.titleField, _title),
@@ -264,6 +270,15 @@ class _BookEditScreenState extends State<BookEditScreen> {
               controller: _series,
               suggestions: library.knownSeries,
               decoration: InputDecoration(labelText: t.seriesField),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _seriesVolume,
+              decoration: InputDecoration(
+                labelText: t.seriesVolumeField,
+                hintText: t.seriesVolumeHint,
+              ),
+              keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 12),
             TextFormField(

@@ -103,7 +103,10 @@ class BookDetailScreen extends StatelessWidget {
                     if (book.series != null) ...[
                       const SizedBox(height: 2),
                       Text(
-                        book.series!,
+                        book.seriesVolume != null
+                            ? t.seriesWithVolume(
+                                book.series!, book.seriesVolume!.toString())
+                            : book.series!,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               fontStyle: FontStyle.italic,
                             ),

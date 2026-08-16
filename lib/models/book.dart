@@ -6,6 +6,7 @@ class Book {
   final List<String> authors;
   final List<String> illustrators;
   final String? series;
+  final int? seriesVolume;
   final String? publisher;
   final String? publishedDate;
   final String? description;
@@ -25,6 +26,7 @@ class Book {
     this.authors = const [],
     this.illustrators = const [],
     this.series,
+    this.seriesVolume,
     this.publisher,
     this.publishedDate,
     this.description,
@@ -48,6 +50,7 @@ class Book {
     List<String>? authors,
     List<String>? illustrators,
     String? series,
+    int? seriesVolume,
     String? publisher,
     String? publishedDate,
     String? description,
@@ -67,6 +70,7 @@ class Book {
       authors: authors ?? this.authors,
       illustrators: illustrators ?? this.illustrators,
       series: series ?? this.series,
+      seriesVolume: seriesVolume ?? this.seriesVolume,
       publisher: publisher ?? this.publisher,
       publishedDate: publishedDate ?? this.publishedDate,
       description: description ?? this.description,
@@ -89,6 +93,7 @@ class Book {
       'authors': authors.join('|'),
       'illustrators': illustrators.join('|'),
       'series': series,
+      'seriesVolume': seriesVolume,
       'publisher': publisher,
       'publishedDate': publishedDate,
       'description': description,
@@ -117,6 +122,7 @@ class Book {
           ? const []
           : illustratorsRaw.split('|'),
       series: map['series'] as String?,
+      seriesVolume: map['seriesVolume'] as int?,
       publisher: map['publisher'] as String?,
       publishedDate: map['publishedDate'] as String?,
       description: map['description'] as String?,

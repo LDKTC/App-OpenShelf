@@ -85,6 +85,8 @@ class LibraryProvider extends ChangeNotifier {
   // Previously-used field values, for the edit form's suggestion dropdowns
   // ---------------------------------------------------------------------
 
+  Set<String> get knownTitles => {for (final b in _books) b.title};
+
   Set<String> get knownAuthors => {for (final b in _books) ...b.authors};
 
   Set<String> get knownIllustrators =>
