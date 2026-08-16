@@ -29,10 +29,14 @@ class LibraryScreen extends StatefulWidget {
 
 class _LibraryScreenState extends State<LibraryScreen> {
   final _searchController = TextEditingController();
+  final _searchFocusNode = FocusNode();
+  final _viewModeButtonKey = GlobalKey();
+  bool _searchExpanded = false;
 
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -40,6 +44,57 @@ class _LibraryScreenState extends State<LibraryScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => BookDetailScreen(bookId: bookId)),
     );
+  }
+
+  void _toggleSearch(LibraryProvider library) {
+    setState(() => _searchExpanded = !_searchExpanded);
+    if (_searchExpanded) {
+      _searchFocusNode.requestFocus();
+    } else {
+      _searchController.clear();
+      library.setSearchQuery('');
+    }
+  }
+
+  Future<void> _pickViewMode(LibraryProvider library) async {
+    final button =
+        _viewModeButtonKey.currentContext!.findRenderObject() as RenderBox;
+    final overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
+    final position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        button.localToGlobal(
+            button.size.bottomLeft(Offset.zero), ancestor: overlay),
+        button.localToGlobal(
+            button.size.bottomRight(Offset.zero), ancestor: overlay),
+      ),
+      Offset.zero & overlay.size,
+    );
+    final t = AppLocalizations.of(context);
+    final selected = await showMenu<LibraryViewMode>(
+      context: context,
+      position: position,
+      items: [
+        for (final mode in LibraryViewMode.values)
+          PopupMenuItem(
+            value: mode,
+            child: Row(
+              children: [
+                Icon(mode.icon, size: 20),
+                const SizedBox(width: 12),
+                Text(mode.label(t)),
+                if (mode == library.viewMode) ...[
+                  const Spacer(),
+                  const Icon(Icons.check, size: 18),
+                ],
+              ],
+            ),
+          ),
+      ],
+    );
+    if (selected != null) {
+      library.setViewMode(selected);
+    }
   }
 
   @override
@@ -53,87 +108,101 @@ class _LibraryScreenState extends State<LibraryScreen> {
         title: Text(t.myLibrary),
         actions: [
           IconButton(
+            icon: Icon(_searchExpanded ? Icons.search_off : Icons.search),
+            tooltip: _searchExpanded ? t.closeSearch : t.openSearch,
+            onPressed: () => _toggleSearch(library),
+          ),
+          IconButton(
+            key: _viewModeButtonKey,
             icon: Icon(library.viewMode.icon),
             tooltip: t.switchToViewMode(library.viewMode.next.label(t)),
             onPressed: library.cycleViewMode,
+            onLongPress: () => _pickViewMode(library),
           ),
         ],
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: t.searchHint,
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.qr_code_scanner),
-                  tooltip: t.scanToSearch,
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const ScanScreen(mode: ScanMode.search),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 200),
+            alignment: Alignment.topCenter,
+            child: _searchExpanded
+                ? Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    child: TextField(
+                      controller: _searchController,
+                      focusNode: _searchFocusNode,
+                      decoration: InputDecoration(
+                        hintText: t.searchHint,
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.qr_code_scanner),
+                          tooltip: t.scanToSearch,
+                          onPressed: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  const ScanScreen(mode: ScanMode.search),
+                            ),
+                          ),
+                        ),
+                        isDense: true,
+                      ),
+                      onChanged: library.setSearchQuery,
                     ),
-                  ),
-                ),
-                isDense: true,
-              ),
-              onChanged: library.setSearchQuery,
-            ),
+                  )
+                : const SizedBox(width: double.infinity),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                _SelectButton<LibraryStatusFilter?>(
-                  icon: Icons.filter_list,
-                  tooltip: t.filterStatusLabel,
-                  value: library.statusFilter,
-                  onChanged: library.setStatusFilter,
-                  items: [
-                    DropdownMenuItem(value: null, child: Text(t.filterAll)),
-                    for (final filter in LibraryStatusFilter.values)
-                      DropdownMenuItem(value: filter, child: Text(filter.label(t))),
-                  ],
-                ),
-                const SizedBox(width: 8),
-                _SelectButton<LibrarySortField>(
-                  icon: Icons.sort,
-                  tooltip: t.sortByLabel,
-                  value: library.sortField,
-                  onChanged: (field) {
-                    if (field != null) library.setSortField(field);
-                  },
-                  items: [
-                    for (final field in LibrarySortField.values)
-                      DropdownMenuItem(value: field, child: Text(field.label(t))),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          if (library.categories.isNotEmpty)
-            SizedBox(
-              height: 40,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
                 children: [
-                  for (final category in library.categories)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: Text(category.name),
-                        selected: library.categoryFilterId == category.id,
-                        onSelected: (selected) => library.setCategoryFilter(
-                          selected ? category.id : null,
-                        ),
-                      ),
+                  _SelectButton<LibraryStatusFilter?>(
+                    icon: Icons.filter_list,
+                    tooltip: t.filterStatusLabel,
+                    value: library.statusFilter,
+                    onChanged: library.setStatusFilter,
+                    items: [
+                      DropdownMenuItem(value: null, child: Text(t.filterAll)),
+                      for (final filter in LibraryStatusFilter.values)
+                        DropdownMenuItem(value: filter, child: Text(filter.label(t))),
+                    ],
+                  ),
+                  const SizedBox(width: 8),
+                  _SelectButton<LibrarySortField>(
+                    icon: Icons.sort,
+                    tooltip: t.sortByLabel,
+                    value: library.sortField,
+                    onChanged: (field) {
+                      if (field != null) library.setSortField(field);
+                    },
+                    items: [
+                      for (final field in LibrarySortField.values)
+                        DropdownMenuItem(value: field, child: Text(field.label(t))),
+                    ],
+                  ),
+                  if (library.categories.isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    _SelectButton<int?>(
+                      icon: Icons.category_outlined,
+                      tooltip: t.filterCategoryLabel,
+                      value: library.categoryFilterId,
+                      onChanged: library.setCategoryFilter,
+                      items: [
+                        DropdownMenuItem(value: null, child: Text(t.filterAll)),
+                        for (final category in library.categories)
+                          DropdownMenuItem(
+                            value: category.id,
+                            child: Text(category.name),
+                          ),
+                      ],
                     ),
+                  ],
                 ],
               ),
             ),
+          ),
           const SizedBox(height: 4),
           Expanded(
             child: library.loading

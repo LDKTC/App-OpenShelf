@@ -202,9 +202,8 @@ class BookDetailScreen extends StatelessWidget {
                   }
                   final page = pages[index];
                   return InkWell(
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => BookPagesScreen(book: book)),
-                    ),
+                    onTap: () =>
+                        showFullImagePreview(context, page.imagePath),
                     borderRadius: BorderRadius.circular(6),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(6),

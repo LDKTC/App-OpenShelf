@@ -71,6 +71,96 @@ void main() {
       expect(result.thumbnailUrl, 'https://images.ranobedb.org/cover.jpg');
       expect(result.isbn13, isbn13);
       expect(result.source, 'ranobedb');
+      expect(result.language, isNull);
+    });
+
+    test(
+        'uses the matched release\'s language to pick the title in that '
+        'language, and records it', () async {
+      final client = MockClient((request) async {
+        if (request.url.path == '/api/v0/releases') {
+          return _json({
+            'releases': [
+              {'id': 7, 'isbn13': isbn13},
+            ],
+          });
+        }
+        if (request.url.path == '/api/v0/release/7') {
+          return _json({
+            'release': {
+              'books': [
+                {'id': 42},
+              ],
+            },
+          });
+        }
+        if (request.url.path == '/api/v0/book/42') {
+          return _json({
+            'book': {
+              'title': 'Genkoku no Taitoru',
+              'romaji': 'Genkoku no Taitoru',
+              'titles': [
+                {'lang': 'ja', 'title': 'Genkoku no Taitoru'},
+                {'lang': 'en', 'title': 'English Title', 'romaji': null},
+              ],
+              'releases': [
+                {'isbn13': '9780000000001', 'lang': 'ja'},
+                {'isbn13': isbn13, 'lang': 'en'},
+              ],
+            },
+          });
+        }
+        return http.Response('not found', 404);
+      });
+
+      final result = await RanobeDbProvider(client: client).lookup(isbn13);
+
+      expect(result, isNotNull);
+      expect(result!.title, 'English Title');
+      expect(result.language, 'en');
+    });
+
+    test(
+        "falls back to the book's default title when there's no matching "
+        'language entry', () async {
+      final client = MockClient((request) async {
+        if (request.url.path == '/api/v0/releases') {
+          return _json({
+            'releases': [
+              {'id': 7, 'isbn13': isbn13},
+            ],
+          });
+        }
+        if (request.url.path == '/api/v0/release/7') {
+          return _json({
+            'release': {
+              'books': [
+                {'id': 42},
+              ],
+            },
+          });
+        }
+        if (request.url.path == '/api/v0/book/42') {
+          return _json({
+            'book': {
+              'title': 'Default Title',
+              'titles': [
+                {'lang': 'ja', 'title': 'Default Title'},
+              ],
+              'releases': [
+                {'isbn13': isbn13, 'lang': 'fr'},
+              ],
+            },
+          });
+        }
+        return http.Response('not found', 404);
+      });
+
+      final result = await RanobeDbProvider(client: client).lookup(isbn13);
+
+      expect(result, isNotNull);
+      expect(result!.title, 'Default Title');
+      expect(result.language, 'fr');
     });
 
     test('ignores a release result whose ISBN does not match', () async {

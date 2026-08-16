@@ -28,6 +28,7 @@ class ShelfGridView extends StatelessWidget {
       return SpineShelfView(
         books: books,
         presetFor: (bookId) => library.activeCoverPresetFor(bookId),
+        statusFor: (bookId) => library.currentStampFor(bookId)?.type,
         onTapBook: onTapBook,
       );
     }
@@ -46,6 +47,7 @@ class ShelfGridView extends StatelessWidget {
         return BookShelfTile(
           book: book,
           activePreset: library.activeCoverPresetFor(book.id!),
+          currentStatus: library.currentStampFor(book.id!)?.type,
           mode: mode,
           onTap: () => onTapBook(book.id!),
         );

@@ -72,12 +72,15 @@ class AppLocalizations {
       _p('switchToViewMode', {'mode': mode});
   String get searchHint => _t('searchHint');
   String get scanToSearch => _t('scanToSearch');
+  String get openSearch => _t('openSearch');
+  String get closeSearch => _t('closeSearch');
   String get filterAll => _t('filterAll');
   String get emptyLibrary => _t('emptyLibrary');
   String get noBooksYet => _t('noBooksYet');
   String get scanIsbnBarcode => _t('scanIsbnBarcode');
   String get enterIsbnNumber => _t('enterIsbnNumber');
   String get filterStatusLabel => _t('filterStatusLabel');
+  String get filterCategoryLabel => _t('filterCategoryLabel');
   String get sortByLabel => _t('sortByLabel');
   String get sortByDateAdded => _t('sortByDateAdded');
   String get sortByAuthor => _t('sortByAuthor');
@@ -328,6 +331,8 @@ const _en = <String, String>{
   'switchToViewMode': 'Switch to {mode}',
   'searchHint': 'Search title, author, ISBN',
   'scanToSearch': 'Scan to search',
+  'openSearch': 'Search',
+  'closeSearch': 'Close search',
   'filterAll': 'All',
   'emptyLibrary':
       'No books yet. Scan a barcode or add one manually to get started.',
@@ -335,6 +340,7 @@ const _en = <String, String>{
   'scanIsbnBarcode': 'Scan ISBN barcode',
   'enterIsbnNumber': 'Enter ISBN number',
   'filterStatusLabel': 'Status',
+  'filterCategoryLabel': 'Category',
   'sortByLabel': 'Sort by',
   'sortByDateAdded': 'Date added',
   'sortByAuthor': 'Author',
@@ -560,12 +566,15 @@ const _th = <String, String>{
   'switchToViewMode': 'สลับไปที่{mode}',
   'searchHint': 'ค้นหาชื่อเรื่อง ผู้แต่ง หรือ ISBN',
   'scanToSearch': 'สแกนเพื่อค้นหา',
+  'openSearch': 'ค้นหา',
+  'closeSearch': 'ปิดการค้นหา',
   'filterAll': 'ทั้งหมด',
   'emptyLibrary': 'ยังไม่มีหนังสือ สแกนบาร์โค้ดหรือเพิ่มด้วยตนเองเพื่อเริ่มต้น',
   'noBooksYet': 'ยังไม่มีหนังสือ',
   'scanIsbnBarcode': 'สแกนบาร์โค้ด ISBN',
   'enterIsbnNumber': 'กรอกหมายเลข ISBN',
   'filterStatusLabel': 'สถานะ',
+  'filterCategoryLabel': 'หมวดหมู่',
   'sortByLabel': 'เรียงตาม',
   'sortByDateAdded': 'วันที่เพิ่ม',
   'sortByAuthor': 'ผู้แต่ง',

@@ -15,9 +15,17 @@ import '../../models/book_metadata.dart';
 /// associated book id, and `GET /book/{id}` gives the full metadata
 /// (authors, description, cover) used to build a [BookMetadata]. The
 /// book's own release list is still checked against the queried ISBN-13
-/// as a final guard. Since most scanned books aren't light novels, this
-/// rarely matches — that's expected, and callers already treat a null
-/// result as "try the next provider".
+/// as a final guard — and since each entry in that list carries its own
+/// `lang`, the matching entry tells us which language the scanned ISBN
+/// was actually published in. A book can have multiple language editions
+/// (e.g. the original Japanese plus an English translation) sharing one
+/// `book` record but with distinct entries in its `titles` array, so that
+/// language is then used to pick the title in the matching language
+/// (falling back to the book's default title when there's no dedicated
+/// entry for it) rather than always the original-language title. Since
+/// most scanned books aren't light novels, this rarely matches — that's
+/// expected, and callers already treat a null result as "try the next
+/// provider".
 class RanobeDbProvider {
   RanobeDbProvider({http.Client? client}) : _client = client ?? http.Client();
 
@@ -44,12 +52,19 @@ class RanobeDbProvider {
     if (book == null) return null;
 
     final releases = book['releases'] as List<dynamic>? ?? [];
-    final isMatch = releases.any(
-      (r) => (r as Map<String, dynamic>)['isbn13'] == isbn13,
-    );
+    String? matchedLang;
+    var isMatch = false;
+    for (final r in releases) {
+      final map = r as Map<String, dynamic>;
+      if (map['isbn13'] == isbn13) {
+        isMatch = true;
+        matchedLang = map['lang'] as String?;
+        break;
+      }
+    }
     if (!isMatch) return null;
 
-    return _toMetadata(book, isbn13);
+    return _toMetadata(book, isbn13, matchedLang);
   }
 
   Future<int?> _findReleaseId(String isbn13) async {
@@ -87,8 +102,14 @@ class RanobeDbProvider {
     return (books.first as Map<String, dynamic>)['id'] as int?;
   }
 
-  BookMetadata? _toMetadata(Map<String, dynamic> book, String isbn13) {
-    final title = (book['title'] as String?) ?? (book['romaji'] as String?);
+  BookMetadata? _toMetadata(
+    Map<String, dynamic> book,
+    String isbn13,
+    String? lang,
+  ) {
+    final title = _titleFor(book, lang) ??
+        (book['title'] as String?) ??
+        (book['romaji'] as String?);
     if (title == null || title.isEmpty) return null;
 
     final publishers = (book['publishers'] as List<dynamic>? ?? [])
@@ -126,7 +147,24 @@ class RanobeDbProvider {
       publishedDate: book['c_release_date']?.toString(),
       description: (book['description'] as String?)?.trim(),
       thumbnailUrl: filename == null ? null : '$_imageBase/$filename',
+      language: lang,
       source: 'ranobedb',
     );
+  }
+
+  /// The title of [book] in [lang], from its `titles` array of per-language
+  /// `{lang, title, romaji}` entries — null when [lang] is unknown or the
+  /// book has no dedicated entry for it, so callers fall back to the
+  /// book's default title.
+  String? _titleFor(Map<String, dynamic> book, String? lang) {
+    if (lang == null) return null;
+    final titles = book['titles'] as List<dynamic>? ?? [];
+    for (final entry in titles) {
+      final map = entry as Map<String, dynamic>;
+      if (map['lang'] == lang) {
+        return (map['title'] as String?) ?? (map['romaji'] as String?);
+      }
+    }
+    return null;
   }
 }
