@@ -10,6 +10,7 @@ import '../widgets/shelf_grid_view.dart';
 import 'book_detail_screen.dart';
 import 'book_edit_screen.dart';
 import 'isbn_entry_screen.dart';
+import 'scan_cover_first_screen.dart';
 import 'scan_screen.dart';
 
 extension on LibraryViewMode {
@@ -449,6 +450,13 @@ class _AddBookMenu extends StatelessWidget {
             MaterialPageRoute(builder: (_) => const IsbnEntryScreen()),
           ),
           child: Text(t.enterIsbnNumber),
+        ),
+        MenuItemButton(
+          leadingIcon: const Icon(Icons.add_a_photo_outlined),
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const ScanCoverFirstScreen()),
+          ),
+          child: Text(t.scanCoverFirstLabel),
         ),
         MenuItemButton(
           leadingIcon: const Icon(Icons.edit_outlined),

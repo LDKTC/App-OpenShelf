@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -6,26 +8,35 @@ import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../models/book.dart';
 import '../models/book_metadata.dart';
+import '../models/cover_preset.dart';
+import '../services/image_storage_service.dart';
 import '../services/ocr_service.dart';
 import '../state/library_provider.dart';
 import '../widgets/suggestion_text_field.dart';
 import 'book_detail_screen.dart';
 
 /// Add or edit a book. Can be pre-filled from a metadata lookup, a bare
-/// scanned ISBN with no metadata match, or opened empty for a fully
-/// manual entry. Pass [existingBook] to edit a book already in the
-/// library instead of creating a new one.
+/// scanned ISBN with no metadata match, a photographed cover (via
+/// [scannedCoverPath], from scan-cover-first), or opened empty for a fully
+/// manual entry. Pass [existingBook] to edit a book already in the library
+/// instead of creating a new one.
 class BookEditScreen extends StatefulWidget {
   const BookEditScreen({
     super.key,
     this.metadata,
     this.prefillIsbn13,
     this.existingBook,
+    this.scannedCoverPath,
   });
 
   final BookMetadata? metadata;
   final String? prefillIsbn13;
   final Book? existingBook;
+
+  /// Local file path of a cover photo captured before this book existed
+  /// (the scan-cover-first flow). Saved into permanent storage as the
+  /// book's first cover preset once it's created.
+  final String? scannedCoverPath;
 
   @override
   State<BookEditScreen> createState() => _BookEditScreenState();
@@ -154,6 +165,19 @@ class _BookEditScreenState extends State<BookEditScreen> {
       bookId = await library.addBook(book, categoryIds: _selectedCategoryIds.toList());
     }
 
+    final scannedCoverPath = widget.scannedCoverPath;
+    if (scannedCoverPath != null) {
+      final savedPath = await ImageStorageService.instance
+          .saveCoverImage(bookId, XFile(scannedCoverPath));
+      await library.addCoverPreset(
+        BookCoverPreset(
+          bookId: bookId,
+          frontImagePath: savedPath,
+          createdAt: DateTime.now(),
+        ),
+      );
+    }
+
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => BookDetailScreen(bookId: bookId)),
@@ -229,7 +253,17 @@ class _BookEditScreenState extends State<BookEditScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            if (_thumbnailUrl != null)
+            if (widget.scannedCoverPath != null)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.file(File(widget.scannedCoverPath!), height: 140),
+                  ),
+                ),
+              )
+            else if (_thumbnailUrl != null)
               Center(
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 16),

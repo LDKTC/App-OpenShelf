@@ -53,6 +53,8 @@ class AppLocalizations {
   String documentScanFailed(String error) =>
       _p('documentScanFailed', {'error': error});
   String get saved => _t('saved');
+  String get continueLabel => _t('continueLabel');
+  String get retakeLabel => _t('retakeLabel');
 
   // ---------------------------------------------------------------------
   // Home / navigation
@@ -79,6 +81,7 @@ class AppLocalizations {
   String get noBooksYet => _t('noBooksYet');
   String get scanIsbnBarcode => _t('scanIsbnBarcode');
   String get enterIsbnNumber => _t('enterIsbnNumber');
+  String get scanCoverFirstLabel => _t('scanCoverFirstLabel');
   String get filterStatusLabel => _t('filterStatusLabel');
   String get filterCategoryLabel => _t('filterCategoryLabel');
   String get sortByLabel => _t('sortByLabel');
@@ -117,6 +120,12 @@ class AppLocalizations {
   String get addToLibrary => _t('addToLibrary');
   String get scanToSearchHint => _t('scanToSearchHint');
   String get scanIsbnHint => _t('scanIsbnHint');
+
+  // ---------------------------------------------------------------------
+  // Scan-cover-first screen (add book by cover photo)
+  // ---------------------------------------------------------------------
+  String get scanCoverFirstTitle => _t('scanCoverFirstTitle');
+  String get scanCoverFirstHint => _t('scanCoverFirstHint');
 
   // ---------------------------------------------------------------------
   // Page scan screen (Saved pages)
@@ -320,6 +329,8 @@ const _en = <String, String>{
   'chooseFromGallery': 'Choose from gallery',
   'documentScanFailed': 'Document scan failed: {error}',
   'saved': 'Saved.',
+  'continueLabel': 'Continue',
+  'retakeLabel': 'Retake',
 
   // Home / navigation
   'navLibrary': 'Library',
@@ -342,6 +353,7 @@ const _en = <String, String>{
   'noBooksYet': 'No books yet.',
   'scanIsbnBarcode': 'Scan ISBN barcode',
   'enterIsbnNumber': 'Enter ISBN number',
+  'scanCoverFirstLabel': 'Scan cover first',
   'filterStatusLabel': 'Status',
   'filterCategoryLabel': 'Category',
   'sortByLabel': 'Sort by',
@@ -374,6 +386,10 @@ const _en = <String, String>{
   'addToLibrary': 'Add to library',
   'scanToSearchHint': 'Scan a book already on your shelf to jump to it.',
   'scanIsbnHint': 'Point the camera at the barcode on the back of the book.',
+  'scanCoverFirstTitle': 'Scan cover',
+  'scanCoverFirstHint':
+      "Photograph the book's front cover, then fill in its title and "
+          'other details on the next screen.',
 
   // Page scan screen
   'savePageTitle': 'Save a page',
@@ -558,6 +574,8 @@ const _th = <String, String>{
   'chooseFromGallery': 'เลือกจากคลังภาพ',
   'documentScanFailed': 'สแกนเอกสารไม่สำเร็จ: {error}',
   'saved': 'บันทึกแล้ว',
+  'continueLabel': 'ดำเนินการต่อ',
+  'retakeLabel': 'ถ่ายใหม่',
 
   // Home / navigation
   'navLibrary': 'คลังหนังสือ',
@@ -579,6 +597,7 @@ const _th = <String, String>{
   'noBooksYet': 'ยังไม่มีหนังสือ',
   'scanIsbnBarcode': 'สแกนบาร์โค้ด ISBN',
   'enterIsbnNumber': 'กรอกหมายเลข ISBN',
+  'scanCoverFirstLabel': 'สแกนปกก่อน',
   'filterStatusLabel': 'สถานะ',
   'filterCategoryLabel': 'หมวดหมู่',
   'sortByLabel': 'เรียงตาม',
@@ -610,6 +629,8 @@ const _th = <String, String>{
   'addToLibrary': 'เพิ่มเข้าคลังหนังสือ',
   'scanToSearchHint': 'สแกนหนังสือที่มีอยู่แล้วในชั้นเพื่อไปยังหนังสือเล่มนั้น',
   'scanIsbnHint': 'เล็งกล้องไปที่บาร์โค้ดด้านหลังของหนังสือ',
+  'scanCoverFirstTitle': 'สแกนปกหนังสือ',
+  'scanCoverFirstHint': 'ถ่ายรูปปกหน้าของหนังสือ แล้วกรอกชื่อเรื่องและรายละเอียดอื่น ๆ ในหน้าถัดไป',
 
   // Page scan screen
   'savePageTitle': 'บันทึกหน้าหนังสือ',
