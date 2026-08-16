@@ -83,9 +83,11 @@ class CategoryManagerScreen extends StatelessWidget {
               separatorBuilder: (_, __) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 final category = library.categories[index];
+                final count = library.categoryCounts[category.id] ?? 0;
                 return ListTile(
                   leading: CircleAvatar(backgroundColor: category.colorValue),
                   title: Text(category.name),
+                  subtitle: Text(t.bookCountLabel(count.toString())),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [

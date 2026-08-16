@@ -137,6 +137,37 @@ class LibraryProvider extends ChangeNotifier {
     return pages;
   }
 
+  /// Total number of books in the library, ignoring any active filters —
+  /// used alongside [statusCounts]/[categoryCounts] to show "X books"
+  /// counts next to the filter options themselves.
+  int get totalBookCount => _books.length;
+
+  /// How many books currently sit under each reading-status filter,
+  /// unaffected by the currently active filters/search — shown next to
+  /// each option in the status filter dropdown.
+  Map<LibraryStatusFilter, int> get statusCounts {
+    final counts = {for (final f in LibraryStatusFilter.values) f: 0};
+    for (final book in _books) {
+      final current = currentStampFor(book.id!)?.type;
+      final filter =
+          LibraryStatusFilter.values.firstWhere((f) => f.stampType == current);
+      counts[filter] = counts[filter]! + 1;
+    }
+    return counts;
+  }
+
+  /// How many books are linked to each category, keyed by category id —
+  /// shown next to each option in the category filter dropdown.
+  Map<int, int> get categoryCounts {
+    final counts = <int, int>{};
+    for (final ids in _bookCategoryLinks.values) {
+      for (final id in ids) {
+        counts[id] = (counts[id] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }
+
   List<Book> get filteredBooks {
     final books = _books.where((book) {
       if (_statusFilter != null) {

@@ -85,6 +85,7 @@ class AppLocalizations {
   String get sortByDateAdded => _t('sortByDateAdded');
   String get sortByAuthor => _t('sortByAuthor');
   String get noSeriesGroupLabel => _t('noSeriesGroupLabel');
+  String bookCountLabel(String count) => _p('bookCountLabel', {'count': count});
 
   // ---------------------------------------------------------------------
   // Reading-status filters (LibraryStatusFilter) / stamps (StampType)
@@ -345,6 +346,7 @@ const _en = <String, String>{
   'sortByDateAdded': 'Date added',
   'sortByAuthor': 'Author',
   'noSeriesGroupLabel': 'No series',
+  'bookCountLabel': '{count} books',
 
   // Reading status
   'statusNotStarted': 'Not started',
@@ -579,6 +581,7 @@ const _th = <String, String>{
   'sortByDateAdded': 'วันที่เพิ่ม',
   'sortByAuthor': 'ผู้แต่ง',
   'noSeriesGroupLabel': 'ไม่มีซีรีย์',
+  'bookCountLabel': '{count} เล่ม',
 
   // Reading status
   'statusNotStarted': 'ยังไม่เริ่มอ่าน',
