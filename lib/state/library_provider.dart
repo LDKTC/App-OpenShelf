@@ -51,6 +51,7 @@ class LibraryProvider extends ChangeNotifier {
   List<Book> _books = [];
   List<BookCategory> _categories = [];
   Map<int, List<int>> _bookCategoryLinks = {};
+  Map<int, String?> _primaryCategoryByBookId = {};
   Map<int, List<ReadingStamp>> _stampsByBook = {};
   Map<int, List<BookCoverPreset>> _coverPresetsByBook = {};
   Map<int, List<BookPage>> _pagesByBook = {};
@@ -147,6 +148,37 @@ class LibraryProvider extends ChangeNotifier {
     return pages;
   }
 
+  /// Total number of books in the library, ignoring any active filters —
+  /// used alongside [statusCounts]/[categoryCounts] to show "X books"
+  /// counts next to the filter options themselves.
+  int get totalBookCount => _books.length;
+
+  /// How many books currently sit under each reading-status filter,
+  /// unaffected by the currently active filters/search — shown next to
+  /// each option in the status filter dropdown.
+  Map<LibraryStatusFilter, int> get statusCounts {
+    final counts = {for (final f in LibraryStatusFilter.values) f: 0};
+    for (final book in _books) {
+      final current = currentStampFor(book.id!)?.type;
+      final filter =
+          LibraryStatusFilter.values.firstWhere((f) => f.stampType == current);
+      counts[filter] = counts[filter]! + 1;
+    }
+    return counts;
+  }
+
+  /// How many books are linked to each category, keyed by category id —
+  /// shown next to each option in the category filter dropdown.
+  Map<int, int> get categoryCounts {
+    final counts = <int, int>{};
+    for (final ids in _bookCategoryLinks.values) {
+      for (final id in ids) {
+        counts[id] = (counts[id] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }
+
   List<Book> get filteredBooks {
     final books = _books.where((book) {
       if (_statusFilter != null) {
@@ -174,8 +206,17 @@ class LibraryProvider extends ChangeNotifier {
   /// the newest-first order already used everywhere else in the app; every
   /// other field sorts ascending (A→Z / lowest ISBN first), with books
   /// missing that field pushed to the end rather than clustered at the
-  /// top by sorting as empty strings.
+  /// top by sorting as empty strings. Whichever field is primary, ties are
+  /// broken the same way — by language, then category, then title (see
+  /// [_compareSecondaryFields]) — instead of leaving same-key books in
+  /// whatever order they happened to come out of the database in.
   int _compareBySortField(Book a, Book b) {
+    final primaryCompare = _comparePrimaryField(a, b);
+    if (primaryCompare != 0) return primaryCompare;
+    return _compareSecondaryFields(a, b);
+  }
+
+  int _comparePrimaryField(Book a, Book b) {
     switch (_sortField) {
       case LibrarySortField.dateAdded:
         return b.dateAdded.compareTo(a.dateAdded);
@@ -186,14 +227,9 @@ class LibraryProvider extends ChangeNotifier {
             .toLowerCase()
             .compareTo(b.authorsDisplay.toLowerCase());
       case LibrarySortField.publisher:
-        final publisherCompare =
-            _compareNullableStrings(a.publisher, b.publisher);
-        if (publisherCompare != 0) return publisherCompare;
-        return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+        return _compareNullableStrings(a.publisher, b.publisher);
       case LibrarySortField.isbn:
-        final isbnCompare = _compareNullableStrings(a.isbn13, b.isbn13);
-        if (isbnCompare != 0) return isbnCompare;
-        return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+        return _compareNullableStrings(a.isbn13, b.isbn13);
       case LibrarySortField.series:
         final hasSeriesCompare =
             (a.series != null && a.series!.isNotEmpty ? 0 : 1)
@@ -201,20 +237,29 @@ class LibraryProvider extends ChangeNotifier {
         if (hasSeriesCompare != 0) return hasSeriesCompare;
         final seriesCompare = _compareNullableStrings(a.series, b.series);
         if (seriesCompare != 0) return seriesCompare;
-        final volumeCompare =
-            (a.seriesVolume ?? 1 << 30).compareTo(b.seriesVolume ?? 1 << 30);
-        if (volumeCompare != 0) return volumeCompare;
-        return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+        return (a.seriesVolume ?? 1 << 30).compareTo(b.seriesVolume ?? 1 << 30);
       case LibrarySortField.languageGenre:
         final languageCompare = _compareNullableStrings(a.language, b.language);
         if (languageCompare != 0) return languageCompare;
         final genreCompare = _compareNullableStrings(a.genre, b.genre);
         if (genreCompare != 0) return genreCompare;
-        final volumeCompare =
-            (a.seriesVolume ?? 1 << 30).compareTo(b.seriesVolume ?? 1 << 30);
-        if (volumeCompare != 0) return volumeCompare;
-        return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+        return (a.seriesVolume ?? 1 << 30).compareTo(b.seriesVolume ?? 1 << 30);
     }
+  }
+
+  /// The tie-breaker applied after whatever [sortField] is currently
+  /// primary: language, then category (a book's alphabetically-first
+  /// linked category, from [_primaryCategoryByBookId]), then title as the
+  /// final fallback so equal-key books still land in a stable order.
+  int _compareSecondaryFields(Book a, Book b) {
+    final languageCompare = _compareNullableStrings(a.language, b.language);
+    if (languageCompare != 0) return languageCompare;
+    final categoryCompare = _compareNullableStrings(
+      _primaryCategoryByBookId[a.id],
+      _primaryCategoryByBookId[b.id],
+    );
+    if (categoryCompare != 0) return categoryCompare;
+    return a.title.toLowerCase().compareTo(b.title.toLowerCase());
   }
 
   /// Case-insensitive string compare with null/empty pushed after every
@@ -233,6 +278,7 @@ class LibraryProvider extends ChangeNotifier {
     _books = await _db.getAllBooks();
     _categories = await _db.getAllCategories();
     _bookCategoryLinks = await _db.getAllBookCategoryLinks();
+    _primaryCategoryByBookId = _computePrimaryCategoryByBookId();
     _stampsByBook = _groupByBookId(await _db.getAllStamps(), (s) => s.bookId);
     _coverPresetsByBook = _groupByBookId(
       await _db.getAllCoverPresets(),
@@ -247,6 +293,26 @@ class LibraryProvider extends ChangeNotifier {
     _appLocale = await _settings.getAppLocale();
     _loading = false;
     notifyListeners();
+  }
+
+  /// The category name used to break sort ties by category (see
+  /// [_compareSecondaryFields]): a book can have several categories, so
+  /// each book is keyed by the alphabetically-first one of its linked
+  /// category names, or null if it has none.
+  Map<int, String?> _computePrimaryCategoryByBookId() {
+    final categoryNameById = {
+      for (final category in _categories) category.id!: category.name,
+    };
+    final result = <int, String?>{};
+    for (final entry in _bookCategoryLinks.entries) {
+      final names = entry.value
+          .map((id) => categoryNameById[id])
+          .whereType<String>()
+          .toList()
+        ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+      result[entry.key] = names.isEmpty ? null : names.first;
+    }
+    return result;
   }
 
   Map<int, List<T>> _groupByBookId<T>(

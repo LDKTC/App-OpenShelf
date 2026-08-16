@@ -164,13 +164,18 @@ class _BookEditScreenState extends State<BookEditScreen> {
       dateAdded: widget.existingBook?.dateAdded ?? DateTime.now(),
     );
 
-    int bookId;
     if (_isEditing) {
       await library.updateBook(book, categoryIds: _selectedCategoryIds.toList());
-      bookId = book.id!;
-    } else {
-      bookId = await library.addBook(book, categoryIds: _selectedCategoryIds.toList());
+      if (!mounted) return;
+      // Editing always opens from that book's own BookDetailScreen, which
+      // already watches the provider and will show the saved changes as
+      // soon as we pop back to it — no need to push a second copy of it.
+      Navigator.of(context).pop();
+      return;
     }
+
+    final bookId =
+        await library.addBook(book, categoryIds: _selectedCategoryIds.toList());
 
     final scannedCoverPath = widget.scannedCoverPath;
     if (scannedCoverPath != null) {

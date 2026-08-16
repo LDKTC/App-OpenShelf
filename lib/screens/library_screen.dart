@@ -166,9 +166,17 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     value: library.statusFilter,
                     onChanged: library.setStatusFilter,
                     items: [
-                      DropdownMenuItem(value: null, child: Text(t.filterAll)),
+                      DropdownMenuItem(
+                        value: null,
+                        child: Text('${t.filterAll} (${library.totalBookCount})'),
+                      ),
                       for (final filter in LibraryStatusFilter.values)
-                        DropdownMenuItem(value: filter, child: Text(filter.label(t))),
+                        DropdownMenuItem(
+                          value: filter,
+                          child: Text(
+                            '${filter.label(t)} (${library.statusCounts[filter]})',
+                          ),
+                        ),
                     ],
                   ),
                   const SizedBox(width: 8),
@@ -192,11 +200,16 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       value: library.categoryFilterId,
                       onChanged: library.setCategoryFilter,
                       items: [
-                        DropdownMenuItem(value: null, child: Text(t.filterAll)),
+                        DropdownMenuItem(
+                          value: null,
+                          child: Text('${t.filterAll} (${library.totalBookCount})'),
+                        ),
                         for (final category in library.categories)
                           DropdownMenuItem(
                             value: category.id,
-                            child: Text(category.name),
+                            child: Text(
+                              '${category.name} (${library.categoryCounts[category.id] ?? 0})',
+                            ),
                           ),
                       ],
                     ),
@@ -206,6 +219,19 @@ class _LibraryScreenState extends State<LibraryScreen> {
             ),
           ),
           const SizedBox(height: 4),
+          if (!library.loading && books.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  t.bookCountLabel(books.length.toString()),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+              ),
+            ),
           Expanded(
             child: library.loading
                 ? const Center(child: CircularProgressIndicator())
