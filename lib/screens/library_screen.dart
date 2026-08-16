@@ -29,10 +29,13 @@ class LibraryScreen extends StatefulWidget {
 
 class _LibraryScreenState extends State<LibraryScreen> {
   final _searchController = TextEditingController();
+  final _searchFocusNode = FocusNode();
+  bool _searchExpanded = false;
 
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -40,6 +43,16 @@ class _LibraryScreenState extends State<LibraryScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => BookDetailScreen(bookId: bookId)),
     );
+  }
+
+  void _toggleSearch(LibraryProvider library) {
+    setState(() => _searchExpanded = !_searchExpanded);
+    if (_searchExpanded) {
+      _searchFocusNode.requestFocus();
+    } else {
+      _searchController.clear();
+      library.setSearchQuery('');
+    }
   }
 
   @override
@@ -53,6 +66,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
         title: Text(t.myLibrary),
         actions: [
           IconButton(
+            icon: Icon(_searchExpanded ? Icons.search_off : Icons.search),
+            tooltip: _searchExpanded ? t.closeSearch : t.openSearch,
+            onPressed: () => _toggleSearch(library),
+          ),
+          IconButton(
             icon: Icon(library.viewMode.icon),
             tooltip: t.switchToViewMode(library.viewMode.next.label(t)),
             onPressed: library.cycleViewMode,
@@ -61,26 +79,34 @@ class _LibraryScreenState extends State<LibraryScreen> {
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: t.searchHint,
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.qr_code_scanner),
-                  tooltip: t.scanToSearch,
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const ScanScreen(mode: ScanMode.search),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 200),
+            alignment: Alignment.topCenter,
+            child: _searchExpanded
+                ? Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    child: TextField(
+                      controller: _searchController,
+                      focusNode: _searchFocusNode,
+                      decoration: InputDecoration(
+                        hintText: t.searchHint,
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.qr_code_scanner),
+                          tooltip: t.scanToSearch,
+                          onPressed: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  const ScanScreen(mode: ScanMode.search),
+                            ),
+                          ),
+                        ),
+                        isDense: true,
+                      ),
+                      onChanged: library.setSearchQuery,
                     ),
-                  ),
-                ),
-                isDense: true,
-              ),
-              onChanged: library.setSearchQuery,
-            ),
+                  )
+                : const SizedBox(width: double.infinity),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),

@@ -72,6 +72,8 @@ class AppLocalizations {
       _p('switchToViewMode', {'mode': mode});
   String get searchHint => _t('searchHint');
   String get scanToSearch => _t('scanToSearch');
+  String get openSearch => _t('openSearch');
+  String get closeSearch => _t('closeSearch');
   String get filterAll => _t('filterAll');
   String get emptyLibrary => _t('emptyLibrary');
   String get noBooksYet => _t('noBooksYet');
@@ -328,6 +330,8 @@ const _en = <String, String>{
   'switchToViewMode': 'Switch to {mode}',
   'searchHint': 'Search title, author, ISBN',
   'scanToSearch': 'Scan to search',
+  'openSearch': 'Search',
+  'closeSearch': 'Close search',
   'filterAll': 'All',
   'emptyLibrary':
       'No books yet. Scan a barcode or add one manually to get started.',
@@ -560,6 +564,8 @@ const _th = <String, String>{
   'switchToViewMode': 'สลับไปที่{mode}',
   'searchHint': 'ค้นหาชื่อเรื่อง ผู้แต่ง หรือ ISBN',
   'scanToSearch': 'สแกนเพื่อค้นหา',
+  'openSearch': 'ค้นหา',
+  'closeSearch': 'ปิดการค้นหา',
   'filterAll': 'ทั้งหมด',
   'emptyLibrary': 'ยังไม่มีหนังสือ สแกนบาร์โค้ดหรือเพิ่มด้วยตนเองเพื่อเริ่มต้น',
   'noBooksYet': 'ยังไม่มีหนังสือ',
