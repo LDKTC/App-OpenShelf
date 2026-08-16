@@ -157,15 +157,30 @@ class BookDetailScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           StampTimeline(bookId: bookId),
-          if (categories.isNotEmpty) ...[
-            const SizedBox(height: 20),
-            Text(t.categoriesLabel, style: Theme.of(context).textTheme.labelLarge),
-            const SizedBox(height: 8),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(t.categoriesLabel, style: Theme.of(context).textTheme.labelLarge),
+              IconButton(
+                icon: const Icon(Icons.add_circle_outline),
+                tooltip: t.editCategoriesTooltip,
+                visualDensity: VisualDensity.compact,
+                onPressed: () => _pickCategories(context, bookId, categoryIds),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          if (categories.isEmpty)
+            Text(
+              t.noCategoriesAssignedHint,
+              style: Theme.of(context).textTheme.bodySmall,
+            )
+          else
             Wrap(
               spacing: 8,
               children: [for (final c in categories) Chip(label: Text(c.name))],
             ),
-          ],
           const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -245,6 +260,116 @@ class BookDetailScreen extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+Future<void> _pickCategories(
+  BuildContext context,
+  int bookId,
+  Set<int> currentIds,
+) async {
+  final result = await showDialog<Set<int>>(
+    context: context,
+    builder: (_) => _CategoryPickerDialog(initialSelectedIds: currentIds),
+  );
+  if (result != null && context.mounted) {
+    await context.read<LibraryProvider>().setBookCategories(bookId, result.toList());
+  }
+}
+
+class _CategoryPickerDialog extends StatefulWidget {
+  const _CategoryPickerDialog({required this.initialSelectedIds});
+
+  final Set<int> initialSelectedIds;
+
+  @override
+  State<_CategoryPickerDialog> createState() => _CategoryPickerDialogState();
+}
+
+class _CategoryPickerDialogState extends State<_CategoryPickerDialog> {
+  late final Set<int> _selectedIds = {...widget.initialSelectedIds};
+
+  Future<void> _addNewCategory(BuildContext context) async {
+    final controller = TextEditingController();
+    final name = await showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        final t = AppLocalizations.of(ctx);
+        return AlertDialog(
+          title: Text(t.newCategoryTitle),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: InputDecoration(labelText: t.categoryNameField),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(t.cancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
+              child: Text(t.add),
+            ),
+          ],
+        );
+      },
+    );
+    if (name != null && name.isNotEmpty && context.mounted) {
+      final id = await context.read<LibraryProvider>().addCategory(name);
+      if (mounted) setState(() => _selectedIds.add(id));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final library = context.watch<LibraryProvider>();
+    final t = AppLocalizations.of(context);
+
+    return AlertDialog(
+      title: Text(t.selectCategoriesTitle),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: library.categories.isEmpty
+            ? Text(t.noCategoriesYet)
+            : SingleChildScrollView(
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final category in library.categories)
+                      FilterChip(
+                        label: Text(category.name),
+                        selected: _selectedIds.contains(category.id),
+                        onSelected: (selected) => setState(() {
+                          if (selected) {
+                            _selectedIds.add(category.id!);
+                          } else {
+                            _selectedIds.remove(category.id);
+                          }
+                        }),
+                      ),
+                  ],
+                ),
+              ),
+      ),
+      actions: [
+        TextButton.icon(
+          onPressed: () => _addNewCategory(context),
+          icon: const Icon(Icons.add, size: 18),
+          label: Text(t.newCategoryTitle),
+        ),
+        const Spacer(),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(t.cancel),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(_selectedIds),
+          child: Text(t.save),
+        ),
+      ],
     );
   }
 }

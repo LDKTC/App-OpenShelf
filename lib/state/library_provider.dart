@@ -317,6 +317,11 @@ class LibraryProvider extends ChangeNotifier {
     await loadAll();
   }
 
+  Future<void> setBookCategories(int bookId, List<int> categoryIds) async {
+    await _db.setBookCategories(bookId, categoryIds);
+    await loadAll();
+  }
+
   Future<int> addCategory(String name) async {
     final id = await _db.insertCategory(BookCategory(name: name));
     await loadAll();

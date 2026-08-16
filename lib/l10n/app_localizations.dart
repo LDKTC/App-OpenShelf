@@ -243,6 +243,9 @@ class AppLocalizations {
   String get manageCoversLabel => _t('manageCoversLabel');
   String get readingStatusLabel => _t('readingStatusLabel');
   String get categoriesLabel => _t('categoriesLabel');
+  String get editCategoriesTooltip => _t('editCategoriesTooltip');
+  String get noCategoriesAssignedHint => _t('noCategoriesAssignedHint');
+  String get selectCategoriesTitle => _t('selectCategoriesTitle');
   String get savedPagesLabel => _t('savedPagesLabel');
   String get viewAllLabel => _t('viewAllLabel');
   String get descriptionLabel => _t('descriptionLabel');
@@ -499,6 +502,9 @@ const _en = <String, String>{
   'manageCoversLabel': 'Manage covers',
   'readingStatusLabel': 'Reading status',
   'categoriesLabel': 'Categories',
+  'editCategoriesTooltip': 'Edit categories',
+  'noCategoriesAssignedHint': 'No categories yet. Tap the icon above to add some.',
+  'selectCategoriesTitle': 'Select categories',
   'savedPagesLabel': 'Saved pages',
   'viewAllLabel': 'View all',
   'descriptionLabel': 'Description',
@@ -714,6 +720,9 @@ const _th = <String, String>{
   'manageCoversLabel': 'จัดการปกหนังสือ',
   'readingStatusLabel': 'สถานะการอ่าน',
   'categoriesLabel': 'หมวดหมู่',
+  'editCategoriesTooltip': 'แก้ไขหมวดหมู่',
+  'noCategoriesAssignedHint': 'ยังไม่มีหมวดหมู่ แตะไอคอนด้านบนเพื่อเพิ่ม',
+  'selectCategoriesTitle': 'เลือกหมวดหมู่',
   'savedPagesLabel': 'หน้าที่บันทึกไว้',
   'viewAllLabel': 'ดูทั้งหมด',
   'descriptionLabel': 'คำอธิบาย',
