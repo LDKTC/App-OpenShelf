@@ -30,6 +30,7 @@ class LibraryScreen extends StatefulWidget {
 class _LibraryScreenState extends State<LibraryScreen> {
   final _searchController = TextEditingController();
   final _searchFocusNode = FocusNode();
+  final _viewModeButtonKey = GlobalKey();
   bool _searchExpanded = false;
 
   @override
@@ -55,6 +56,47 @@ class _LibraryScreenState extends State<LibraryScreen> {
     }
   }
 
+  Future<void> _pickViewMode(LibraryProvider library) async {
+    final button =
+        _viewModeButtonKey.currentContext!.findRenderObject() as RenderBox;
+    final overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
+    final position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        button.localToGlobal(
+            button.size.bottomLeft(Offset.zero), ancestor: overlay),
+        button.localToGlobal(
+            button.size.bottomRight(Offset.zero), ancestor: overlay),
+      ),
+      Offset.zero & overlay.size,
+    );
+    final t = AppLocalizations.of(context);
+    final selected = await showMenu<LibraryViewMode>(
+      context: context,
+      position: position,
+      items: [
+        for (final mode in LibraryViewMode.values)
+          PopupMenuItem(
+            value: mode,
+            child: Row(
+              children: [
+                Icon(mode.icon, size: 20),
+                const SizedBox(width: 12),
+                Text(mode.label(t)),
+                if (mode == library.viewMode) ...[
+                  const Spacer(),
+                  const Icon(Icons.check, size: 18),
+                ],
+              ],
+            ),
+          ),
+      ],
+    );
+    if (selected != null) {
+      library.setViewMode(selected);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final library = context.watch<LibraryProvider>();
@@ -71,9 +113,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
             onPressed: () => _toggleSearch(library),
           ),
           IconButton(
+            key: _viewModeButtonKey,
             icon: Icon(library.viewMode.icon),
             tooltip: t.switchToViewMode(library.viewMode.next.label(t)),
             onPressed: library.cycleViewMode,
+            onLongPress: () => _pickViewMode(library),
           ),
         ],
       ),
