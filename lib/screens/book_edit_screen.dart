@@ -50,6 +50,8 @@ class _BookEditScreenState extends State<BookEditScreen> {
   late final TextEditingController _illustrators;
   late final TextEditingController _series;
   late final TextEditingController _seriesVolume;
+  late final TextEditingController _genre;
+  late final TextEditingController _language;
   late final TextEditingController _publisher;
   late final TextEditingController _publishedDate;
   late final TextEditingController _isbn13;
@@ -83,6 +85,8 @@ class _BookEditScreenState extends State<BookEditScreen> {
     _series = TextEditingController(text: book?.series ?? '');
     _seriesVolume =
         TextEditingController(text: book?.seriesVolumeDisplay ?? '');
+    _genre = TextEditingController(text: book?.genre ?? '');
+    _language = TextEditingController(text: book?.language ?? metadata?.language ?? '');
     _publisher = TextEditingController(text: book?.publisher ?? metadata?.publisher ?? '');
     _publishedDate = TextEditingController(
       text: book?.publishedDate ?? metadata?.publishedDate ?? '',
@@ -113,6 +117,8 @@ class _BookEditScreenState extends State<BookEditScreen> {
     _illustrators.dispose();
     _series.dispose();
     _seriesVolume.dispose();
+    _genre.dispose();
+    _language.dispose();
     _publisher.dispose();
     _publishedDate.dispose();
     _isbn13.dispose();
@@ -146,12 +152,13 @@ class _BookEditScreenState extends State<BookEditScreen> {
       illustrators: illustrators,
       series: _series.text.trim().isEmpty ? null : _series.text.trim(),
       seriesVolume: double.tryParse(_seriesVolume.text.trim()),
+      genre: _genre.text.trim().isEmpty ? null : _genre.text.trim(),
       publisher: _publisher.text.trim().isEmpty ? null : _publisher.text.trim(),
       publishedDate: _publishedDate.text.trim().isEmpty ? null : _publishedDate.text.trim(),
       description: _description.text.trim().isEmpty ? null : _description.text.trim(),
       pageCount: int.tryParse(_pageCount.text.trim()),
       thumbnailUrl: _thumbnailUrl,
-      language: widget.existingBook?.language ?? widget.metadata?.language,
+      language: _language.text.trim().isEmpty ? null : _language.text.trim(),
       notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
       source: widget.existingBook?.source ?? widget.metadata?.source ?? 'manual',
       dateAdded: widget.existingBook?.dateAdded ?? DateTime.now(),
@@ -317,6 +324,24 @@ class _BookEditScreenState extends State<BookEditScreen> {
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
               ],
+            ),
+            const SizedBox(height: 12),
+            SuggestionTextField(
+              controller: _genre,
+              suggestions: library.knownGenres,
+              decoration: InputDecoration(
+                labelText: t.genreField,
+                hintText: t.genreHint,
+              ),
+            ),
+            const SizedBox(height: 12),
+            SuggestionTextField(
+              controller: _language,
+              suggestions: library.knownLanguages,
+              decoration: InputDecoration(
+                labelText: t.languageField,
+                hintText: t.languageHint,
+              ),
             ),
             const SizedBox(height: 12),
             TextFormField(

@@ -310,6 +310,12 @@ String? _groupHeaderFor(Book book, LibrarySortField sortField, AppLocalizations 
     case LibrarySortField.series:
       final series = book.series;
       return (series == null || series.isEmpty) ? t.noSeriesGroupLabel : series;
+    case LibrarySortField.languageGenre:
+      final parts = [
+        if (book.language != null && book.language!.isNotEmpty) book.language!,
+        if (book.genre != null && book.genre!.isNotEmpty) book.genre!,
+      ];
+      return parts.isEmpty ? t.noLanguageGenreGroupLabel : parts.join(' · ');
     case LibrarySortField.title:
     case LibrarySortField.author:
     case LibrarySortField.publisher:

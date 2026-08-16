@@ -87,7 +87,9 @@ class AppLocalizations {
   String get sortByLabel => _t('sortByLabel');
   String get sortByDateAdded => _t('sortByDateAdded');
   String get sortByAuthor => _t('sortByAuthor');
+  String get sortByLanguageGenre => _t('sortByLanguageGenre');
   String get noSeriesGroupLabel => _t('noSeriesGroupLabel');
+  String get noLanguageGenreGroupLabel => _t('noLanguageGenreGroupLabel');
 
   // ---------------------------------------------------------------------
   // Reading-status filters (LibraryStatusFilter) / stamps (StampType)
@@ -279,6 +281,10 @@ class AppLocalizations {
   String get seriesField => _t('seriesField');
   String get seriesVolumeField => _t('seriesVolumeField');
   String get seriesVolumeHint => _t('seriesVolumeHint');
+  String get genreField => _t('genreField');
+  String get genreHint => _t('genreHint');
+  String get languageField => _t('languageField');
+  String get languageHint => _t('languageHint');
   String get isbn13Field => _t('isbn13Field');
   String get publisherField => _t('publisherField');
   String get publishedDateField => _t('publishedDateField');
@@ -359,7 +365,9 @@ const _en = <String, String>{
   'sortByLabel': 'Sort by',
   'sortByDateAdded': 'Date added',
   'sortByAuthor': 'Author',
+  'sortByLanguageGenre': 'Language & genre',
   'noSeriesGroupLabel': 'No series',
+  'noLanguageGenreGroupLabel': 'No language/genre',
 
   // Reading status
   'statusNotStarted': 'Not started',
@@ -542,6 +550,10 @@ const _en = <String, String>{
   'seriesField': 'Series',
   'seriesVolumeField': 'Volume #',
   'seriesVolumeHint': 'e.g. 3 or 4.5',
+  'genreField': 'Genre',
+  'genreHint': 'e.g. Novel, Manga',
+  'languageField': 'Language',
+  'languageHint': 'e.g. Thai, Japanese',
   'isbn13Field': 'ISBN-13',
   'publisherField': 'Publisher',
   'publishedDateField': 'Published date',
@@ -603,7 +615,9 @@ const _th = <String, String>{
   'sortByLabel': 'เรียงตาม',
   'sortByDateAdded': 'วันที่เพิ่ม',
   'sortByAuthor': 'ผู้แต่ง',
+  'sortByLanguageGenre': 'ภาษาและประเภท',
   'noSeriesGroupLabel': 'ไม่มีซีรีย์',
+  'noLanguageGenreGroupLabel': 'ไม่มีภาษา/ประเภท',
 
   // Reading status
   'statusNotStarted': 'ยังไม่เริ่มอ่าน',
@@ -765,6 +779,10 @@ const _th = <String, String>{
   'seriesField': 'ซีรีย์',
   'seriesVolumeField': 'เล่มที่',
   'seriesVolumeHint': 'เช่น 3 หรือ 4.5',
+  'genreField': 'ประเภท',
+  'genreHint': 'เช่น นิยาย, มังงะ',
+  'languageField': 'ภาษา',
+  'languageHint': 'เช่น ไทย, ญี่ปุ่น',
   'isbn13Field': 'ISBN-13',
   'publisherField': 'สำนักพิมพ์',
   'publishedDateField': 'วันที่เผยแพร่',

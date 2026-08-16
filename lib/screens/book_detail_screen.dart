@@ -130,6 +130,15 @@ class BookDetailScreen extends StatelessWidget {
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
+                    if (book.genre != null || book.language != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        [book.genre, book.language]
+                            .whereType<String>()
+                            .join(' · '),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
                     if (book.isbn13 != null) ...[
                       const SizedBox(height: 4),
                       Text(t.isbnLabel(book.isbn13!), style: Theme.of(context).textTheme.bodySmall),

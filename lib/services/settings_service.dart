@@ -98,7 +98,8 @@ enum LibrarySortField {
   series,
   author,
   publisher,
-  isbn;
+  isbn,
+  languageGenre;
 
   String get storageValue => name;
 
@@ -109,6 +110,7 @@ enum LibrarySortField {
         LibrarySortField.author => t.sortByAuthor,
         LibrarySortField.publisher => t.publisherField,
         LibrarySortField.isbn => t.isbn13Field,
+        LibrarySortField.languageGenre => t.sortByLanguageGenre,
       };
 
   static LibrarySortField fromStorage(String? value) {
