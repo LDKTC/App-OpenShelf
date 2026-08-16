@@ -201,11 +201,11 @@ class LibraryProvider extends ChangeNotifier {
   /// Case-insensitive string compare with null/empty pushed after every
   /// real value (rather than sorting first, as `''` naturally would).
   int _compareNullableStrings(String? a, String? b) {
-    final aHas = a != null && a.isNotEmpty;
-    final bHas = b != null && b.isNotEmpty;
-    if (aHas != bHas) return aHas ? -1 : 1;
-    if (!aHas) return 0;
-    return a!.toLowerCase().compareTo(b!.toLowerCase());
+    if (a == null || a.isEmpty) {
+      return (b == null || b.isEmpty) ? 0 : 1;
+    }
+    if (b == null || b.isEmpty) return -1;
+    return a.toLowerCase().compareTo(b.toLowerCase());
   }
 
   Future<void> loadAll() async {
