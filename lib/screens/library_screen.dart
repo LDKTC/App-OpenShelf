@@ -6,6 +6,7 @@ import '../models/book.dart';
 import '../services/settings_service.dart';
 import '../state/library_provider.dart';
 import '../widgets/book_list_tile.dart';
+import '../widgets/book_preview_sheet.dart';
 import '../widgets/shelf_grid_view.dart';
 import 'book_detail_screen.dart';
 import 'book_edit_screen.dart';
@@ -378,6 +379,14 @@ class _BookListView extends StatelessWidget {
                   library.activeCoverPresetFor(book.id!)?.frontImagePath,
               currentStatus: library.currentStampFor(book.id!)?.type,
               onTap: () => onTapBook(book.id!),
+              onLongPress: () => showBookPreview(
+                context,
+                book: book,
+                coverImagePath:
+                    library.activeCoverPresetFor(book.id!)?.frontImagePath,
+                currentStatus: library.currentStampFor(book.id!)?.type,
+                onOpenDetails: () => onTapBook(book.id!),
+              ),
             ),
         };
       },

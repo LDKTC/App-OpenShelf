@@ -259,6 +259,7 @@ class AppLocalizations {
   String get selectCategoriesTitle => _t('selectCategoriesTitle');
   String get savedPagesLabel => _t('savedPagesLabel');
   String get viewAllLabel => _t('viewAllLabel');
+  String get viewDetailsLabel => _t('viewDetailsLabel');
   String get descriptionLabel => _t('descriptionLabel');
   String get myNotesLabel => _t('myNotesLabel');
   String illustratedBy(String names) => _p('illustratedBy', {'names': names});
@@ -531,6 +532,7 @@ const _en = <String, String>{
   'selectCategoriesTitle': 'Select categories',
   'savedPagesLabel': 'Saved pages',
   'viewAllLabel': 'View all',
+  'viewDetailsLabel': 'View details',
   'descriptionLabel': 'Description',
   'myNotesLabel': 'My notes',
   'illustratedBy': 'Illustrated by {names}',
@@ -760,6 +762,7 @@ const _th = <String, String>{
   'selectCategoriesTitle': 'เลือกหมวดหมู่',
   'savedPagesLabel': 'หน้าที่บันทึกไว้',
   'viewAllLabel': 'ดูทั้งหมด',
+  'viewDetailsLabel': 'ดูรายละเอียด',
   'descriptionLabel': 'คำอธิบาย',
   'myNotesLabel': 'บันทึกของฉัน',
   'illustratedBy': 'ภาพประกอบโดย {names}',

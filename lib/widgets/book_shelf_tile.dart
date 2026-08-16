@@ -25,6 +25,7 @@ class BookShelfTile extends StatelessWidget {
     this.currentStatus,
     required this.mode,
     required this.onTap,
+    this.onLongPress,
   });
 
   final Book book;
@@ -32,6 +33,9 @@ class BookShelfTile extends StatelessWidget {
   final StampType? currentStatus;
   final ShelfDisplayMode mode;
   final VoidCallback onTap;
+
+  /// Long-pressing shows a quick preview sheet instead of navigating in.
+  final VoidCallback? onLongPress;
 
   String? get _imagePath => mode == ShelfDisplayMode.spine
       ? activePreset?.spineImagePath
@@ -44,6 +48,7 @@ class BookShelfTile extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
+        onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(4),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(4),
@@ -138,12 +143,16 @@ class SpineShelfView extends StatelessWidget {
     required this.presetFor,
     this.statusFor,
     required this.onTapBook,
+    this.onLongPressBook,
   });
 
   final List<Book> books;
   final BookCoverPreset? Function(int bookId) presetFor;
   final StampType? Function(int bookId)? statusFor;
   final void Function(int bookId) onTapBook;
+
+  /// Long-pressing shows a quick preview sheet instead of navigating in.
+  final void Function(int bookId)? onLongPressBook;
 
   static const double rowHeight = 180;
 
@@ -163,6 +172,9 @@ class SpineShelfView extends StatelessWidget {
               currentStatus: statusFor?.call(book.id!),
               height: rowHeight,
               onTap: () => onTapBook(book.id!),
+              onLongPress: onLongPressBook == null
+                  ? null
+                  : () => onLongPressBook!(book.id!),
             ),
         ],
       ),
@@ -178,6 +190,7 @@ class _SpineTile extends StatefulWidget {
     this.currentStatus,
     required this.height,
     required this.onTap,
+    this.onLongPress,
   });
 
   final Book book;
@@ -185,6 +198,7 @@ class _SpineTile extends StatefulWidget {
   final StampType? currentStatus;
   final double height;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   @override
   State<_SpineTile> createState() => _SpineTileState();
@@ -232,6 +246,7 @@ class _SpineTileState extends State<_SpineTile> {
         color: Colors.transparent,
         child: InkWell(
           onTap: widget.onTap,
+          onLongPress: widget.onLongPress,
           borderRadius: BorderRadius.circular(4),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(4),
