@@ -105,6 +105,16 @@ class LibraryProvider extends ChangeNotifier {
           if (b.series != null && b.series!.isNotEmpty) b.series!,
       };
 
+  Set<String> get knownGenres => {
+        for (final b in _books)
+          if (b.genre != null && b.genre!.isNotEmpty) b.genre!,
+      };
+
+  Set<String> get knownLanguages => {
+        for (final b in _books)
+          if (b.language != null && b.language!.isNotEmpty) b.language!,
+      };
+
   /// The most recent stamp for [bookId] (by timestamp), or null if the
   /// book has no stamps yet — i.e. "not started".
   ReadingStamp? currentStampFor(int bookId) =>
@@ -227,6 +237,12 @@ class LibraryProvider extends ChangeNotifier {
         if (hasSeriesCompare != 0) return hasSeriesCompare;
         final seriesCompare = _compareNullableStrings(a.series, b.series);
         if (seriesCompare != 0) return seriesCompare;
+        return (a.seriesVolume ?? 1 << 30).compareTo(b.seriesVolume ?? 1 << 30);
+      case LibrarySortField.languageGenre:
+        final languageCompare = _compareNullableStrings(a.language, b.language);
+        if (languageCompare != 0) return languageCompare;
+        final genreCompare = _compareNullableStrings(a.genre, b.genre);
+        if (genreCompare != 0) return genreCompare;
         return (a.seriesVolume ?? 1 << 30).compareTo(b.seriesVolume ?? 1 << 30);
     }
   }
@@ -383,6 +399,11 @@ class LibraryProvider extends ChangeNotifier {
 
   Future<void> deleteBook(int id) async {
     await _db.deleteBook(id);
+    await loadAll();
+  }
+
+  Future<void> setBookCategories(int bookId, List<int> categoryIds) async {
+    await _db.setBookCategories(bookId, categoryIds);
     await loadAll();
   }
 

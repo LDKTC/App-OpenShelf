@@ -14,6 +14,7 @@ class BookListTile extends StatelessWidget {
     this.coverImagePath,
     required this.currentStatus,
     required this.onTap,
+    this.onLongPress,
   });
 
   final Book book;
@@ -25,6 +26,9 @@ class BookListTile extends StatelessWidget {
   final StampType? currentStatus;
   final VoidCallback onTap;
 
+  /// Long-pressing shows a quick preview sheet instead of navigating in.
+  final VoidCallback? onLongPress;
+
   @override
   Widget build(BuildContext context) {
     final path = coverImagePath ?? book.thumbnailUrl;
@@ -35,6 +39,7 @@ class BookListTile extends StatelessWidget {
 
     return ListTile(
       onTap: onTap,
+      onLongPress: onLongPress,
       leading: SizedBox(
         width: 44,
         height: 64,

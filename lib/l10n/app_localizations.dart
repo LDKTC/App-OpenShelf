@@ -53,6 +53,8 @@ class AppLocalizations {
   String documentScanFailed(String error) =>
       _p('documentScanFailed', {'error': error});
   String get saved => _t('saved');
+  String get continueLabel => _t('continueLabel');
+  String get retakeLabel => _t('retakeLabel');
 
   // ---------------------------------------------------------------------
   // Home / navigation
@@ -79,12 +81,15 @@ class AppLocalizations {
   String get noBooksYet => _t('noBooksYet');
   String get scanIsbnBarcode => _t('scanIsbnBarcode');
   String get enterIsbnNumber => _t('enterIsbnNumber');
+  String get scanCoverFirstLabel => _t('scanCoverFirstLabel');
   String get filterStatusLabel => _t('filterStatusLabel');
   String get filterCategoryLabel => _t('filterCategoryLabel');
   String get sortByLabel => _t('sortByLabel');
   String get sortByDateAdded => _t('sortByDateAdded');
   String get sortByAuthor => _t('sortByAuthor');
+  String get sortByLanguageGenre => _t('sortByLanguageGenre');
   String get noSeriesGroupLabel => _t('noSeriesGroupLabel');
+  String get noLanguageGenreGroupLabel => _t('noLanguageGenreGroupLabel');
   String bookCountLabel(String count) => _p('bookCountLabel', {'count': count});
 
   // ---------------------------------------------------------------------
@@ -118,6 +123,12 @@ class AppLocalizations {
   String get addToLibrary => _t('addToLibrary');
   String get scanToSearchHint => _t('scanToSearchHint');
   String get scanIsbnHint => _t('scanIsbnHint');
+
+  // ---------------------------------------------------------------------
+  // Scan-cover-first screen (add book by cover photo)
+  // ---------------------------------------------------------------------
+  String get scanCoverFirstTitle => _t('scanCoverFirstTitle');
+  String get scanCoverFirstHint => _t('scanCoverFirstHint');
 
   // ---------------------------------------------------------------------
   // Page scan screen (Saved pages)
@@ -244,8 +255,12 @@ class AppLocalizations {
   String get manageCoversLabel => _t('manageCoversLabel');
   String get readingStatusLabel => _t('readingStatusLabel');
   String get categoriesLabel => _t('categoriesLabel');
+  String get editCategoriesTooltip => _t('editCategoriesTooltip');
+  String get noCategoriesAssignedHint => _t('noCategoriesAssignedHint');
+  String get selectCategoriesTitle => _t('selectCategoriesTitle');
   String get savedPagesLabel => _t('savedPagesLabel');
   String get viewAllLabel => _t('viewAllLabel');
+  String get viewDetailsLabel => _t('viewDetailsLabel');
   String get descriptionLabel => _t('descriptionLabel');
   String get myNotesLabel => _t('myNotesLabel');
   String illustratedBy(String names) => _p('illustratedBy', {'names': names});
@@ -268,6 +283,10 @@ class AppLocalizations {
   String get seriesField => _t('seriesField');
   String get seriesVolumeField => _t('seriesVolumeField');
   String get seriesVolumeHint => _t('seriesVolumeHint');
+  String get genreField => _t('genreField');
+  String get genreHint => _t('genreHint');
+  String get languageField => _t('languageField');
+  String get languageHint => _t('languageHint');
   String get isbn13Field => _t('isbn13Field');
   String get publisherField => _t('publisherField');
   String get publishedDateField => _t('publishedDateField');
@@ -318,6 +337,8 @@ const _en = <String, String>{
   'chooseFromGallery': 'Choose from gallery',
   'documentScanFailed': 'Document scan failed: {error}',
   'saved': 'Saved.',
+  'continueLabel': 'Continue',
+  'retakeLabel': 'Retake',
 
   // Home / navigation
   'navLibrary': 'Library',
@@ -340,12 +361,15 @@ const _en = <String, String>{
   'noBooksYet': 'No books yet.',
   'scanIsbnBarcode': 'Scan ISBN barcode',
   'enterIsbnNumber': 'Enter ISBN number',
+  'scanCoverFirstLabel': 'Scan cover first',
   'filterStatusLabel': 'Status',
   'filterCategoryLabel': 'Category',
   'sortByLabel': 'Sort by',
   'sortByDateAdded': 'Date added',
   'sortByAuthor': 'Author',
+  'sortByLanguageGenre': 'Language & genre',
   'noSeriesGroupLabel': 'No series',
+  'noLanguageGenreGroupLabel': 'No language/genre',
   'bookCountLabel': '{count} books',
 
   // Reading status
@@ -373,6 +397,10 @@ const _en = <String, String>{
   'addToLibrary': 'Add to library',
   'scanToSearchHint': 'Scan a book already on your shelf to jump to it.',
   'scanIsbnHint': 'Point the camera at the barcode on the back of the book.',
+  'scanCoverFirstTitle': 'Scan cover',
+  'scanCoverFirstHint':
+      "Photograph the book's front cover, then fill in its title and "
+          'other details on the next screen.',
 
   // Page scan screen
   'savePageTitle': 'Save a page',
@@ -501,8 +529,12 @@ const _en = <String, String>{
   'manageCoversLabel': 'Manage covers',
   'readingStatusLabel': 'Reading status',
   'categoriesLabel': 'Categories',
+  'editCategoriesTooltip': 'Edit categories',
+  'noCategoriesAssignedHint': 'No categories yet. Tap the icon above to add some.',
+  'selectCategoriesTitle': 'Select categories',
   'savedPagesLabel': 'Saved pages',
   'viewAllLabel': 'View all',
+  'viewDetailsLabel': 'View details',
   'descriptionLabel': 'Description',
   'myNotesLabel': 'My notes',
   'illustratedBy': 'Illustrated by {names}',
@@ -521,7 +553,11 @@ const _en = <String, String>{
   'illustratorsField': 'Illustrators (comma-separated)',
   'seriesField': 'Series',
   'seriesVolumeField': 'Volume #',
-  'seriesVolumeHint': 'e.g. 3',
+  'seriesVolumeHint': 'e.g. 3 or 4.5',
+  'genreField': 'Genre',
+  'genreHint': 'e.g. Novel, Manga',
+  'languageField': 'Language',
+  'languageHint': 'e.g. Thai, Japanese',
   'isbn13Field': 'ISBN-13',
   'publisherField': 'Publisher',
   'publishedDateField': 'Published date',
@@ -554,6 +590,8 @@ const _th = <String, String>{
   'chooseFromGallery': 'เลือกจากคลังภาพ',
   'documentScanFailed': 'สแกนเอกสารไม่สำเร็จ: {error}',
   'saved': 'บันทึกแล้ว',
+  'continueLabel': 'ดำเนินการต่อ',
+  'retakeLabel': 'ถ่ายใหม่',
 
   // Home / navigation
   'navLibrary': 'คลังหนังสือ',
@@ -575,12 +613,15 @@ const _th = <String, String>{
   'noBooksYet': 'ยังไม่มีหนังสือ',
   'scanIsbnBarcode': 'สแกนบาร์โค้ด ISBN',
   'enterIsbnNumber': 'กรอกหมายเลข ISBN',
+  'scanCoverFirstLabel': 'สแกนปกก่อน',
   'filterStatusLabel': 'สถานะ',
   'filterCategoryLabel': 'หมวดหมู่',
   'sortByLabel': 'เรียงตาม',
   'sortByDateAdded': 'วันที่เพิ่ม',
   'sortByAuthor': 'ผู้แต่ง',
+  'sortByLanguageGenre': 'ภาษาและประเภท',
   'noSeriesGroupLabel': 'ไม่มีซีรีย์',
+  'noLanguageGenreGroupLabel': 'ไม่มีภาษา/ประเภท',
   'bookCountLabel': '{count} เล่ม',
 
   // Reading status
@@ -607,6 +648,8 @@ const _th = <String, String>{
   'addToLibrary': 'เพิ่มเข้าคลังหนังสือ',
   'scanToSearchHint': 'สแกนหนังสือที่มีอยู่แล้วในชั้นเพื่อไปยังหนังสือเล่มนั้น',
   'scanIsbnHint': 'เล็งกล้องไปที่บาร์โค้ดด้านหลังของหนังสือ',
+  'scanCoverFirstTitle': 'สแกนปกหนังสือ',
+  'scanCoverFirstHint': 'ถ่ายรูปปกหน้าของหนังสือ แล้วกรอกชื่อเรื่องและรายละเอียดอื่น ๆ ในหน้าถัดไป',
 
   // Page scan screen
   'savePageTitle': 'บันทึกหน้าหนังสือ',
@@ -717,8 +760,12 @@ const _th = <String, String>{
   'manageCoversLabel': 'จัดการปกหนังสือ',
   'readingStatusLabel': 'สถานะการอ่าน',
   'categoriesLabel': 'หมวดหมู่',
+  'editCategoriesTooltip': 'แก้ไขหมวดหมู่',
+  'noCategoriesAssignedHint': 'ยังไม่มีหมวดหมู่ แตะไอคอนด้านบนเพื่อเพิ่ม',
+  'selectCategoriesTitle': 'เลือกหมวดหมู่',
   'savedPagesLabel': 'หน้าที่บันทึกไว้',
   'viewAllLabel': 'ดูทั้งหมด',
+  'viewDetailsLabel': 'ดูรายละเอียด',
   'descriptionLabel': 'คำอธิบาย',
   'myNotesLabel': 'บันทึกของฉัน',
   'illustratedBy': 'ภาพประกอบโดย {names}',
@@ -737,7 +784,11 @@ const _th = <String, String>{
   'illustratorsField': 'ผู้วาดภาพประกอบ (คั่นด้วยจุลภาค)',
   'seriesField': 'ซีรีย์',
   'seriesVolumeField': 'เล่มที่',
-  'seriesVolumeHint': 'เช่น 3',
+  'seriesVolumeHint': 'เช่น 3 หรือ 4.5',
+  'genreField': 'ประเภท',
+  'genreHint': 'เช่น นิยาย, มังงะ',
+  'languageField': 'ภาษา',
+  'languageHint': 'เช่น ไทย, ญี่ปุ่น',
   'isbn13Field': 'ISBN-13',
   'publisherField': 'สำนักพิมพ์',
   'publishedDateField': 'วันที่เผยแพร่',

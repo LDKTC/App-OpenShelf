@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
+import '../models/book.dart';
 import '../services/settings_service.dart';
 import '../state/library_provider.dart';
+import 'book_preview_sheet.dart';
 import 'book_shelf_tile.dart';
 
 /// The "visual bookshelf" view of [LibraryProvider.filteredBooks]: each
@@ -24,12 +26,22 @@ class ShelfGridView extends StatelessWidget {
       return Center(child: Text(AppLocalizations.of(context).noBooksYet));
     }
 
+    void previewBook(Book book) => showBookPreview(
+          context,
+          book: book,
+          coverImagePath: library.activeCoverPresetFor(book.id!)?.frontImagePath,
+          currentStatus: library.currentStampFor(book.id!)?.type,
+          onOpenDetails: () => onTapBook(book.id!),
+        );
+
     if (mode == ShelfDisplayMode.spine) {
       return SpineShelfView(
         books: books,
         presetFor: (bookId) => library.activeCoverPresetFor(bookId),
         statusFor: (bookId) => library.currentStampFor(bookId)?.type,
         onTapBook: onTapBook,
+        onLongPressBook: (bookId) =>
+            previewBook(books.firstWhere((b) => b.id == bookId)),
       );
     }
 
@@ -50,6 +62,7 @@ class ShelfGridView extends StatelessWidget {
           currentStatus: library.currentStampFor(book.id!)?.type,
           mode: mode,
           onTap: () => onTapBook(book.id!),
+          onLongPress: () => previewBook(book),
         );
       },
     );
