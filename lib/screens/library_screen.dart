@@ -6,10 +6,12 @@ import '../models/book.dart';
 import '../services/settings_service.dart';
 import '../state/library_provider.dart';
 import '../widgets/book_list_tile.dart';
+import '../widgets/book_preview_sheet.dart';
 import '../widgets/shelf_grid_view.dart';
 import 'book_detail_screen.dart';
 import 'book_edit_screen.dart';
 import 'isbn_entry_screen.dart';
+import 'scan_cover_first_screen.dart';
 import 'scan_screen.dart';
 
 extension on LibraryViewMode {
@@ -309,6 +311,12 @@ String? _groupHeaderFor(Book book, LibrarySortField sortField, AppLocalizations 
     case LibrarySortField.series:
       final series = book.series;
       return (series == null || series.isEmpty) ? t.noSeriesGroupLabel : series;
+    case LibrarySortField.languageGenre:
+      final parts = [
+        if (book.language != null && book.language!.isNotEmpty) book.language!,
+        if (book.genre != null && book.genre!.isNotEmpty) book.genre!,
+      ];
+      return parts.isEmpty ? t.noLanguageGenreGroupLabel : parts.join(' · ');
     case LibrarySortField.title:
     case LibrarySortField.author:
     case LibrarySortField.publisher:
@@ -371,6 +379,14 @@ class _BookListView extends StatelessWidget {
                   library.activeCoverPresetFor(book.id!)?.frontImagePath,
               currentStatus: library.currentStampFor(book.id!)?.type,
               onTap: () => onTapBook(book.id!),
+              onLongPress: () => showBookPreview(
+                context,
+                book: book,
+                coverImagePath:
+                    library.activeCoverPresetFor(book.id!)?.frontImagePath,
+                currentStatus: library.currentStampFor(book.id!)?.type,
+                onOpenDetails: () => onTapBook(book.id!),
+              ),
             ),
         };
       },
@@ -449,6 +465,13 @@ class _AddBookMenu extends StatelessWidget {
             MaterialPageRoute(builder: (_) => const IsbnEntryScreen()),
           ),
           child: Text(t.enterIsbnNumber),
+        ),
+        MenuItemButton(
+          leadingIcon: const Icon(Icons.add_a_photo_outlined),
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const ScanCoverFirstScreen()),
+          ),
+          child: Text(t.scanCoverFirstLabel),
         ),
         MenuItemButton(
           leadingIcon: const Icon(Icons.edit_outlined),

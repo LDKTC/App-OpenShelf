@@ -13,7 +13,7 @@ class DatabaseService {
   static final DatabaseService instance = DatabaseService._internal();
 
   static const _dbName = 'quetzalib.db';
-  static const _dbVersion = 5;
+  static const _dbVersion = 6;
 
   Database? _db;
 
@@ -38,7 +38,8 @@ class DatabaseService {
             authors TEXT,
             illustrators TEXT,
             series TEXT,
-            seriesVolume INTEGER,
+            seriesVolume REAL,
+            genre TEXT,
             publisher TEXT,
             publishedDate TEXT,
             description TEXT,
@@ -94,6 +95,9 @@ class DatabaseService {
         }
         if (oldVersion < 5) {
           await _migrateToV5(db);
+        }
+        if (oldVersion < 6) {
+          await _migrateToV6(db);
         }
       },
     );
@@ -220,6 +224,13 @@ class DatabaseService {
   /// its volume/issue number within [Book.series] (e.g. "เล่มที่ 3").
   Future<void> _migrateToV5(Database db) async {
     await db.execute('ALTER TABLE books ADD COLUMN seriesVolume INTEGER');
+  }
+
+  /// Upgrades to v6: adds the `genre` column (e.g. "นิยาย"/"มังงะ"), used
+  /// alongside [Book.language] to group/sort the library by language then
+  /// genre then volume.
+  Future<void> _migrateToV6(Database db) async {
+    await db.execute('ALTER TABLE books ADD COLUMN genre TEXT');
   }
 
   // ---------------------------------------------------------------------
