@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -70,7 +71,7 @@ class _BookEditScreenState extends State<BookEditScreen> {
     );
     _series = TextEditingController(text: book?.series ?? '');
     _seriesVolume =
-        TextEditingController(text: book?.seriesVolume?.toString() ?? '');
+        TextEditingController(text: book?.seriesVolumeDisplay ?? '');
     _publisher = TextEditingController(text: book?.publisher ?? metadata?.publisher ?? '');
     _publishedDate = TextEditingController(
       text: book?.publishedDate ?? metadata?.publishedDate ?? '',
@@ -133,7 +134,7 @@ class _BookEditScreenState extends State<BookEditScreen> {
       authors: authors,
       illustrators: illustrators,
       series: _series.text.trim().isEmpty ? null : _series.text.trim(),
-      seriesVolume: int.tryParse(_seriesVolume.text.trim()),
+      seriesVolume: double.tryParse(_seriesVolume.text.trim()),
       publisher: _publisher.text.trim().isEmpty ? null : _publisher.text.trim(),
       publishedDate: _publishedDate.text.trim().isEmpty ? null : _publishedDate.text.trim(),
       description: _description.text.trim().isEmpty ? null : _description.text.trim(),
@@ -278,7 +279,10 @@ class _BookEditScreenState extends State<BookEditScreen> {
                 labelText: t.seriesVolumeField,
                 hintText: t.seriesVolumeHint,
               ),
-              keyboardType: TextInputType.number,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+              ],
             ),
             const SizedBox(height: 12),
             TextFormField(

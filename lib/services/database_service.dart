@@ -38,7 +38,7 @@ class DatabaseService {
             authors TEXT,
             illustrators TEXT,
             series TEXT,
-            seriesVolume INTEGER,
+            seriesVolume REAL,
             publisher TEXT,
             publishedDate TEXT,
             description TEXT,
