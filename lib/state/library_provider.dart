@@ -219,10 +219,25 @@ class LibraryProvider extends ChangeNotifier {
 
   Future<Book?> findByIsbn(String isbn13) => _db.findByIsbn(isbn13);
 
+  /// Adds [book], pre-seeding it with a front-only cover preset from its
+  /// API thumbnail (if any) so it renders on the visual shelf right away
+  /// instead of falling back to the text info tile until the user manually
+  /// scans a cover.
   Future<int> addBook(Book book, {List<int> categoryIds = const []}) async {
     final id = await _db.insertBook(book);
     if (categoryIds.isNotEmpty) {
       await _db.setBookCategories(id, categoryIds);
+    }
+    final thumbnailUrl = book.thumbnailUrl;
+    if (thumbnailUrl != null) {
+      final presetId = await _db.insertCoverPreset(
+        BookCoverPreset(
+          bookId: id,
+          frontImagePath: thumbnailUrl,
+          createdAt: DateTime.now(),
+        ),
+      );
+      await _db.setActiveCoverPreset(id, presetId);
     }
     await loadAll();
     return id;
