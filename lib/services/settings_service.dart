@@ -89,6 +89,36 @@ enum LibraryViewMode {
   }
 }
 
+/// How the library list/shelf orders its books. [dateAdded] (the default)
+/// matches the database's natural insertion order; the rest sort
+/// alphabetically/numerically over the matching [Book] field.
+enum LibrarySortField {
+  dateAdded,
+  title,
+  series,
+  author,
+  publisher,
+  isbn;
+
+  String get storageValue => name;
+
+  String label(AppLocalizations t) => switch (this) {
+        LibrarySortField.dateAdded => t.sortByDateAdded,
+        LibrarySortField.title => t.titleField,
+        LibrarySortField.series => t.seriesField,
+        LibrarySortField.author => t.sortByAuthor,
+        LibrarySortField.publisher => t.publisherField,
+        LibrarySortField.isbn => t.isbn13Field,
+      };
+
+  static LibrarySortField fromStorage(String? value) {
+    return LibrarySortField.values.firstWhere(
+      (f) => f.storageValue == value,
+      orElse: () => LibrarySortField.dateAdded,
+    );
+  }
+}
+
 /// Persists user-configurable app settings: the optional Cloud Vision API
 /// key used for OCR text scanning, and the library view mode.
 class SettingsService {
@@ -96,6 +126,7 @@ class SettingsService {
   static final SettingsService instance = SettingsService._internal();
 
   static const _keyLibraryViewMode = 'library_view_mode';
+  static const _keyLibrarySortField = 'library_sort_field';
   static const _keyCloudVisionApiKey = 'cloud_vision_api_key';
   static const _keyAppLocale = 'app_locale';
 
@@ -135,5 +166,15 @@ class SettingsService {
   Future<void> setLibraryViewMode(LibraryViewMode mode) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyLibraryViewMode, mode.storageValue);
+  }
+
+  Future<LibrarySortField> getLibrarySortField() async {
+    final prefs = await SharedPreferences.getInstance();
+    return LibrarySortField.fromStorage(prefs.getString(_keyLibrarySortField));
+  }
+
+  Future<void> setLibrarySortField(LibrarySortField field) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyLibrarySortField, field.storageValue);
   }
 }

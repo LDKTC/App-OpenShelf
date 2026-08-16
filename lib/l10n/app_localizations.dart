@@ -77,6 +77,11 @@ class AppLocalizations {
   String get noBooksYet => _t('noBooksYet');
   String get scanIsbnBarcode => _t('scanIsbnBarcode');
   String get enterIsbnNumber => _t('enterIsbnNumber');
+  String get filterStatusLabel => _t('filterStatusLabel');
+  String get sortByLabel => _t('sortByLabel');
+  String get sortByDateAdded => _t('sortByDateAdded');
+  String get sortByAuthor => _t('sortByAuthor');
+  String get noSeriesGroupLabel => _t('noSeriesGroupLabel');
 
   // ---------------------------------------------------------------------
   // Reading-status filters (LibraryStatusFilter) / stamps (StampType)
@@ -329,6 +334,11 @@ const _en = <String, String>{
   'noBooksYet': 'No books yet.',
   'scanIsbnBarcode': 'Scan ISBN barcode',
   'enterIsbnNumber': 'Enter ISBN number',
+  'filterStatusLabel': 'Status',
+  'sortByLabel': 'Sort by',
+  'sortByDateAdded': 'Date added',
+  'sortByAuthor': 'Author',
+  'noSeriesGroupLabel': 'No series',
 
   // Reading status
   'statusNotStarted': 'Not started',
@@ -555,6 +565,11 @@ const _th = <String, String>{
   'noBooksYet': 'ยังไม่มีหนังสือ',
   'scanIsbnBarcode': 'สแกนบาร์โค้ด ISBN',
   'enterIsbnNumber': 'กรอกหมายเลข ISBN',
+  'filterStatusLabel': 'สถานะ',
+  'sortByLabel': 'เรียงตาม',
+  'sortByDateAdded': 'วันที่เพิ่ม',
+  'sortByAuthor': 'ผู้แต่ง',
+  'noSeriesGroupLabel': 'ไม่มีซีรีย์',
 
   // Reading status
   'statusNotStarted': 'ยังไม่เริ่มอ่าน',
