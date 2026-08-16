@@ -80,6 +80,7 @@ class AppLocalizations {
   String get scanIsbnBarcode => _t('scanIsbnBarcode');
   String get enterIsbnNumber => _t('enterIsbnNumber');
   String get filterStatusLabel => _t('filterStatusLabel');
+  String get filterCategoryLabel => _t('filterCategoryLabel');
   String get sortByLabel => _t('sortByLabel');
   String get sortByDateAdded => _t('sortByDateAdded');
   String get sortByAuthor => _t('sortByAuthor');
@@ -339,6 +340,7 @@ const _en = <String, String>{
   'scanIsbnBarcode': 'Scan ISBN barcode',
   'enterIsbnNumber': 'Enter ISBN number',
   'filterStatusLabel': 'Status',
+  'filterCategoryLabel': 'Category',
   'sortByLabel': 'Sort by',
   'sortByDateAdded': 'Date added',
   'sortByAuthor': 'Author',
@@ -572,6 +574,7 @@ const _th = <String, String>{
   'scanIsbnBarcode': 'สแกนบาร์โค้ด ISBN',
   'enterIsbnNumber': 'กรอกหมายเลข ISBN',
   'filterStatusLabel': 'สถานะ',
+  'filterCategoryLabel': 'หมวดหมู่',
   'sortByLabel': 'เรียงตาม',
   'sortByDateAdded': 'วันที่เพิ่ม',
   'sortByAuthor': 'ผู้แต่ง',

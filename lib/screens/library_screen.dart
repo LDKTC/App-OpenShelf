@@ -110,56 +110,55 @@ class _LibraryScreenState extends State<LibraryScreen> {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                _SelectButton<LibraryStatusFilter?>(
-                  icon: Icons.filter_list,
-                  tooltip: t.filterStatusLabel,
-                  value: library.statusFilter,
-                  onChanged: library.setStatusFilter,
-                  items: [
-                    DropdownMenuItem(value: null, child: Text(t.filterAll)),
-                    for (final filter in LibraryStatusFilter.values)
-                      DropdownMenuItem(value: filter, child: Text(filter.label(t))),
-                  ],
-                ),
-                const SizedBox(width: 8),
-                _SelectButton<LibrarySortField>(
-                  icon: Icons.sort,
-                  tooltip: t.sortByLabel,
-                  value: library.sortField,
-                  onChanged: (field) {
-                    if (field != null) library.setSortField(field);
-                  },
-                  items: [
-                    for (final field in LibrarySortField.values)
-                      DropdownMenuItem(value: field, child: Text(field.label(t))),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          if (library.categories.isNotEmpty)
-            SizedBox(
-              height: 40,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
                 children: [
-                  for (final category in library.categories)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: Text(category.name),
-                        selected: library.categoryFilterId == category.id,
-                        onSelected: (selected) => library.setCategoryFilter(
-                          selected ? category.id : null,
-                        ),
-                      ),
+                  _SelectButton<LibraryStatusFilter?>(
+                    icon: Icons.filter_list,
+                    tooltip: t.filterStatusLabel,
+                    value: library.statusFilter,
+                    onChanged: library.setStatusFilter,
+                    items: [
+                      DropdownMenuItem(value: null, child: Text(t.filterAll)),
+                      for (final filter in LibraryStatusFilter.values)
+                        DropdownMenuItem(value: filter, child: Text(filter.label(t))),
+                    ],
+                  ),
+                  const SizedBox(width: 8),
+                  _SelectButton<LibrarySortField>(
+                    icon: Icons.sort,
+                    tooltip: t.sortByLabel,
+                    value: library.sortField,
+                    onChanged: (field) {
+                      if (field != null) library.setSortField(field);
+                    },
+                    items: [
+                      for (final field in LibrarySortField.values)
+                        DropdownMenuItem(value: field, child: Text(field.label(t))),
+                    ],
+                  ),
+                  if (library.categories.isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    _SelectButton<int?>(
+                      icon: Icons.category_outlined,
+                      tooltip: t.filterCategoryLabel,
+                      value: library.categoryFilterId,
+                      onChanged: library.setCategoryFilter,
+                      items: [
+                        DropdownMenuItem(value: null, child: Text(t.filterAll)),
+                        for (final category in library.categories)
+                          DropdownMenuItem(
+                            value: category.id,
+                            child: Text(category.name),
+                          ),
+                      ],
                     ),
+                  ],
                 ],
               ),
             ),
+          ),
           const SizedBox(height: 4),
           Expanded(
             child: library.loading
