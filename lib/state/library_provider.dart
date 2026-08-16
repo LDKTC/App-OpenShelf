@@ -205,7 +205,7 @@ class LibraryProvider extends ChangeNotifier {
     final bHas = b != null && b.isNotEmpty;
     if (aHas != bHas) return aHas ? -1 : 1;
     if (!aHas) return 0;
-    return a.toLowerCase().compareTo(b.toLowerCase());
+    return a!.toLowerCase().compareTo(b!.toLowerCase());
   }
 
   Future<void> loadAll() async {
