@@ -13,7 +13,7 @@ class DatabaseService {
   static final DatabaseService instance = DatabaseService._internal();
 
   static const _dbName = 'quetzalib.db';
-  static const _dbVersion = 4;
+  static const _dbVersion = 5;
 
   Database? _db;
 
@@ -38,6 +38,7 @@ class DatabaseService {
             authors TEXT,
             illustrators TEXT,
             series TEXT,
+            seriesVolume INTEGER,
             publisher TEXT,
             publishedDate TEXT,
             description TEXT,
@@ -90,6 +91,9 @@ class DatabaseService {
         }
         if (oldVersion < 4) {
           await _migrateToV4(db);
+        }
+        if (oldVersion < 5) {
+          await _migrateToV5(db);
         }
       },
     );
@@ -210,6 +214,12 @@ class DatabaseService {
   /// series/collection it belongs to.
   Future<void> _migrateToV4(Database db) async {
     await db.execute('ALTER TABLE books ADD COLUMN series TEXT');
+  }
+
+  /// Upgrades to v5: adds the `seriesVolume` column, so a book can record
+  /// its volume/issue number within [Book.series] (e.g. "เล่มที่ 3").
+  Future<void> _migrateToV5(Database db) async {
+    await db.execute('ALTER TABLE books ADD COLUMN seriesVolume INTEGER');
   }
 
   // ---------------------------------------------------------------------

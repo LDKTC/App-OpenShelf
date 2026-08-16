@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
+import '../models/book.dart';
 import '../services/settings_service.dart';
 import '../state/library_provider.dart';
 import '../widgets/book_list_tile.dart';
@@ -81,17 +82,44 @@ class _LibraryScreenState extends State<LibraryScreen> {
               onChanged: library.setSearchQuery,
             ),
           ),
-          SizedBox(
-            height: 40,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
               children: [
-                _StatusFilterChip(filter: null, label: t.filterAll),
-                for (final filter in LibraryStatusFilter.values)
-                  _StatusFilterChip(filter: filter, label: filter.label(t)),
-                if (library.categories.isNotEmpty) ...[
-                  const VerticalDivider(width: 16),
+                _SelectButton<LibraryStatusFilter?>(
+                  icon: Icons.filter_list,
+                  tooltip: t.filterStatusLabel,
+                  value: library.statusFilter,
+                  onChanged: library.setStatusFilter,
+                  items: [
+                    DropdownMenuItem(value: null, child: Text(t.filterAll)),
+                    for (final filter in LibraryStatusFilter.values)
+                      DropdownMenuItem(value: filter, child: Text(filter.label(t))),
+                  ],
+                ),
+                const SizedBox(width: 8),
+                _SelectButton<LibrarySortField>(
+                  icon: Icons.sort,
+                  tooltip: t.sortByLabel,
+                  value: library.sortField,
+                  onChanged: (field) {
+                    if (field != null) library.setSortField(field);
+                  },
+                  items: [
+                    for (final field in LibrarySortField.values)
+                      DropdownMenuItem(value: field, child: Text(field.label(t))),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          if (library.categories.isNotEmpty)
+            SizedBox(
+              height: 40,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                children: [
                   for (final category in library.categories)
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
@@ -104,9 +132,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       ),
                     ),
                 ],
-              ],
+              ),
             ),
-          ),
           const SizedBox(height: 4),
           Expanded(
             child: library.loading
@@ -114,20 +141,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 : books.isEmpty
                     ? const _EmptyState()
                     : (library.viewMode == LibraryViewMode.list
-                        ? ListView.separated(
-                            itemCount: books.length,
-                            separatorBuilder: (_, __) => const Divider(height: 1),
-                            itemBuilder: (context, index) {
-                              final book = books[index];
-                              return BookListTile(
-                                book: book,
-                                coverImagePath: library
-                                    .activeCoverPresetFor(book.id!)
-                                    ?.frontImagePath,
-                                currentStatus: library.currentStampFor(book.id!)?.type,
-                                onTap: () => _openBook(context, book.id!),
-                              );
-                            },
+                        ? _BookListView(
+                            books: books,
+                            sortField: library.sortField,
+                            library: library,
+                            onTapBook: (bookId) => _openBook(context, bookId),
                           )
                         : ShelfGridView(
                             onTapBook: (bookId) => _openBook(context, bookId),
@@ -140,21 +158,173 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 }
 
-class _StatusFilterChip extends StatelessWidget {
-  const _StatusFilterChip({required this.filter, required this.label});
+/// A bordered, pill-shaped dropdown ("select") button: an icon plus the
+/// current selection's label, tapping it opens the options menu — used for
+/// both the status filter and the sort-field picker so the library screen
+/// only needs one row for both instead of a full chip-per-option list.
+class _SelectButton<T> extends StatelessWidget {
+  const _SelectButton({
+    required this.icon,
+    required this.tooltip,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+  });
 
-  final LibraryStatusFilter? filter;
+  final IconData icon;
+  final String tooltip;
+  final T value;
+  final List<DropdownMenuItem<T>> items;
+  final ValueChanged<T?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Tooltip(
+      message: tooltip,
+      child: Container(
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          border: Border.all(color: colorScheme.outlineVariant),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: colorScheme.onSurfaceVariant),
+            const SizedBox(width: 6),
+            DropdownButtonHideUnderline(
+              child: DropdownButton<T>(
+                value: value,
+                isDense: true,
+                icon: const Icon(Icons.arrow_drop_down, size: 18),
+                items: items,
+                onChanged: onChanged,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One row in the sorted/grouped library list: either a book, a section
+/// header (the date or series it was grouped under), or a plain divider
+/// between two consecutive books in the same section.
+sealed class _LibraryRow {}
+
+class _HeaderRow extends _LibraryRow {
+  _HeaderRow(this.label);
+  final String label;
+}
+
+class _BookRow extends _LibraryRow {
+  _BookRow(this.book);
+  final Book book;
+}
+
+class _DividerRow extends _LibraryRow {}
+
+/// The section header a book falls under for the current [sortField], or
+/// null when that field isn't grouped (title/author/publisher/ISBN stay a
+/// plain flat list, same as before sorting existed).
+String? _groupHeaderFor(Book book, LibrarySortField sortField, AppLocalizations t) {
+  switch (sortField) {
+    case LibrarySortField.dateAdded:
+      final d = book.dateAdded;
+      final mm = d.month.toString().padLeft(2, '0');
+      final dd = d.day.toString().padLeft(2, '0');
+      return '${d.year}-$mm-$dd';
+    case LibrarySortField.series:
+      final series = book.series;
+      return (series == null || series.isEmpty) ? t.noSeriesGroupLabel : series;
+    case LibrarySortField.title:
+    case LibrarySortField.author:
+    case LibrarySortField.publisher:
+    case LibrarySortField.isbn:
+      return null;
+  }
+}
+
+/// Turns the already-sorted [books] into header/book/divider rows: a
+/// header is inserted whenever the group key changes, a divider between
+/// two consecutive books in the same (or no) group — mirroring what
+/// `ListView.separated`'s plain `Divider` used to do before grouping.
+List<_LibraryRow> _buildLibraryRows(
+  List<Book> books,
+  LibrarySortField sortField,
+  AppLocalizations t,
+) {
+  final rows = <_LibraryRow>[];
+  String? lastHeader;
+  for (final book in books) {
+    final header = _groupHeaderFor(book, sortField, t);
+    if (header != null && header != lastHeader) {
+      rows.add(_HeaderRow(header));
+    } else if (rows.isNotEmpty && rows.last is _BookRow) {
+      rows.add(_DividerRow());
+    }
+    rows.add(_BookRow(book));
+    lastHeader = header;
+  }
+  return rows;
+}
+
+class _BookListView extends StatelessWidget {
+  const _BookListView({
+    required this.books,
+    required this.sortField,
+    required this.library,
+    required this.onTapBook,
+  });
+
+  final List<Book> books;
+  final LibrarySortField sortField;
+  final LibraryProvider library;
+  final void Function(int bookId) onTapBook;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final rows = _buildLibraryRows(books, sortField, t);
+    return ListView.builder(
+      itemCount: rows.length,
+      itemBuilder: (context, index) {
+        final row = rows[index];
+        return switch (row) {
+          _HeaderRow(:final label) => _SectionHeader(label: label),
+          _DividerRow() => const Divider(height: 1),
+          _BookRow(:final book) => BookListTile(
+              book: book,
+              coverImagePath:
+                  library.activeCoverPresetFor(book.id!)?.frontImagePath,
+              currentStatus: library.currentStampFor(book.id!)?.type,
+              onTap: () => onTapBook(book.id!),
+            ),
+        };
+      },
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.label});
+
   final String label;
 
   @override
   Widget build(BuildContext context) {
-    final library = context.watch<LibraryProvider>();
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: ChoiceChip(
-        label: Text(label),
-        selected: library.statusFilter == filter,
-        onSelected: (_) => library.setStatusFilter(filter),
+    return Container(
+      width: double.infinity,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
       ),
     );
   }

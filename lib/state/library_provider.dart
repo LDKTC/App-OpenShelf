@@ -55,6 +55,7 @@ class LibraryProvider extends ChangeNotifier {
   Map<int, List<BookCoverPreset>> _coverPresetsByBook = {};
   Map<int, List<BookPage>> _pagesByBook = {};
   LibraryViewMode _viewMode = LibraryViewMode.list;
+  LibrarySortField _sortField = LibrarySortField.dateAdded;
   AppLocale _appLocale = AppLocale.system;
 
   String _searchQuery = '';
@@ -69,6 +70,7 @@ class LibraryProvider extends ChangeNotifier {
   bool get loading => _loading;
   LibraryViewMode get viewMode => _viewMode;
   ShelfDisplayMode get shelfDisplayMode => _viewMode.shelfDisplayMode;
+  LibrarySortField get sortField => _sortField;
   AppLocale get appLocale => _appLocale;
 
   List<int> categoryIdsFor(int bookId) =>
@@ -84,6 +86,8 @@ class LibraryProvider extends ChangeNotifier {
   // ---------------------------------------------------------------------
   // Previously-used field values, for the edit form's suggestion dropdowns
   // ---------------------------------------------------------------------
+
+  Set<String> get knownTitles => {for (final b in _books) b.title};
 
   Set<String> get knownAuthors => {for (final b in _books) ...b.authors};
 
@@ -134,7 +138,7 @@ class LibraryProvider extends ChangeNotifier {
   }
 
   List<Book> get filteredBooks {
-    return _books.where((book) {
+    final books = _books.where((book) {
       if (_statusFilter != null) {
         final current = currentStampFor(book.id!)?.type;
         if (current != _statusFilter!.stampType) return false;
@@ -152,6 +156,56 @@ class LibraryProvider extends ChangeNotifier {
       }
       return true;
     }).toList();
+    books.sort(_compareBySortField);
+    return books;
+  }
+
+  /// Orders two books per [sortField]. [LibrarySortField.dateAdded] keeps
+  /// the newest-first order already used everywhere else in the app; every
+  /// other field sorts ascending (A→Z / lowest ISBN first), with books
+  /// missing that field pushed to the end rather than clustered at the
+  /// top by sorting as empty strings.
+  int _compareBySortField(Book a, Book b) {
+    switch (_sortField) {
+      case LibrarySortField.dateAdded:
+        return b.dateAdded.compareTo(a.dateAdded);
+      case LibrarySortField.title:
+        return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+      case LibrarySortField.author:
+        return a.authorsDisplay
+            .toLowerCase()
+            .compareTo(b.authorsDisplay.toLowerCase());
+      case LibrarySortField.publisher:
+        final publisherCompare =
+            _compareNullableStrings(a.publisher, b.publisher);
+        if (publisherCompare != 0) return publisherCompare;
+        return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+      case LibrarySortField.isbn:
+        final isbnCompare = _compareNullableStrings(a.isbn13, b.isbn13);
+        if (isbnCompare != 0) return isbnCompare;
+        return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+      case LibrarySortField.series:
+        final hasSeriesCompare =
+            (a.series != null && a.series!.isNotEmpty ? 0 : 1)
+                .compareTo(b.series != null && b.series!.isNotEmpty ? 0 : 1);
+        if (hasSeriesCompare != 0) return hasSeriesCompare;
+        final seriesCompare = _compareNullableStrings(a.series, b.series);
+        if (seriesCompare != 0) return seriesCompare;
+        final volumeCompare =
+            (a.seriesVolume ?? 1 << 30).compareTo(b.seriesVolume ?? 1 << 30);
+        if (volumeCompare != 0) return volumeCompare;
+        return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+    }
+  }
+
+  /// Case-insensitive string compare with null/empty pushed after every
+  /// real value (rather than sorting first, as `''` naturally would).
+  int _compareNullableStrings(String? a, String? b) {
+    if (a == null || a.isEmpty) {
+      return (b == null || b.isEmpty) ? 0 : 1;
+    }
+    if (b == null || b.isEmpty) return -1;
+    return a.toLowerCase().compareTo(b.toLowerCase());
   }
 
   Future<void> loadAll() async {
@@ -170,6 +224,7 @@ class LibraryProvider extends ChangeNotifier {
       (p) => p.bookId,
     );
     _viewMode = await _settings.getLibraryViewMode();
+    _sortField = await _settings.getLibrarySortField();
     _appLocale = await _settings.getAppLocale();
     _loading = false;
     notifyListeners();
@@ -211,6 +266,12 @@ class LibraryProvider extends ChangeNotifier {
   /// (list -> shelf covers -> shelf spines -> list).
   Future<void> cycleViewMode() => setViewMode(_viewMode.next);
 
+  Future<void> setSortField(LibrarySortField field) async {
+    _sortField = field;
+    notifyListeners();
+    await _settings.setLibrarySortField(field);
+  }
+
   Future<void> setAppLocale(AppLocale locale) async {
     _appLocale = locale;
     notifyListeners();
@@ -219,10 +280,25 @@ class LibraryProvider extends ChangeNotifier {
 
   Future<Book?> findByIsbn(String isbn13) => _db.findByIsbn(isbn13);
 
+  /// Adds [book], pre-seeding it with a front-only cover preset from its
+  /// API thumbnail (if any) so it renders on the visual shelf right away
+  /// instead of falling back to the text info tile until the user manually
+  /// scans a cover.
   Future<int> addBook(Book book, {List<int> categoryIds = const []}) async {
     final id = await _db.insertBook(book);
     if (categoryIds.isNotEmpty) {
       await _db.setBookCategories(id, categoryIds);
+    }
+    final thumbnailUrl = book.thumbnailUrl;
+    if (thumbnailUrl != null) {
+      final presetId = await _db.insertCoverPreset(
+        BookCoverPreset(
+          bookId: id,
+          frontImagePath: thumbnailUrl,
+          createdAt: DateTime.now(),
+        ),
+      );
+      await _db.setActiveCoverPreset(id, presetId);
     }
     await loadAll();
     return id;

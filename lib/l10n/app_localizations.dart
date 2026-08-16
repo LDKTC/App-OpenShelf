@@ -77,6 +77,11 @@ class AppLocalizations {
   String get noBooksYet => _t('noBooksYet');
   String get scanIsbnBarcode => _t('scanIsbnBarcode');
   String get enterIsbnNumber => _t('enterIsbnNumber');
+  String get filterStatusLabel => _t('filterStatusLabel');
+  String get sortByLabel => _t('sortByLabel');
+  String get sortByDateAdded => _t('sortByDateAdded');
+  String get sortByAuthor => _t('sortByAuthor');
+  String get noSeriesGroupLabel => _t('noSeriesGroupLabel');
 
   // ---------------------------------------------------------------------
   // Reading-status filters (LibraryStatusFilter) / stamps (StampType)
@@ -241,6 +246,8 @@ class AppLocalizations {
   String get myNotesLabel => _t('myNotesLabel');
   String illustratedBy(String names) => _p('illustratedBy', {'names': names});
   String isbnLabel(String isbn) => _p('isbnLabel', {'isbn': isbn});
+  String seriesWithVolume(String series, String volume) =>
+      _p('seriesWithVolume', {'series': series, 'volume': volume});
   String sourceLabel(String source) => _p('sourceLabel', {'source': source});
   String get book3DPreviewTitle => _t('book3DPreviewTitle');
   String get book3DFlipHint => _t('book3DFlipHint');
@@ -255,6 +262,8 @@ class AppLocalizations {
   String get authorsField => _t('authorsField');
   String get illustratorsField => _t('illustratorsField');
   String get seriesField => _t('seriesField');
+  String get seriesVolumeField => _t('seriesVolumeField');
+  String get seriesVolumeHint => _t('seriesVolumeHint');
   String get isbn13Field => _t('isbn13Field');
   String get publisherField => _t('publisherField');
   String get publishedDateField => _t('publishedDateField');
@@ -325,6 +334,11 @@ const _en = <String, String>{
   'noBooksYet': 'No books yet.',
   'scanIsbnBarcode': 'Scan ISBN barcode',
   'enterIsbnNumber': 'Enter ISBN number',
+  'filterStatusLabel': 'Status',
+  'sortByLabel': 'Sort by',
+  'sortByDateAdded': 'Date added',
+  'sortByAuthor': 'Author',
+  'noSeriesGroupLabel': 'No series',
 
   // Reading status
   'statusNotStarted': 'Not started',
@@ -488,6 +502,7 @@ const _en = <String, String>{
   'sourceLabel': 'Source: {source}',
   'book3DPreviewTitle': '3D preview',
   'book3DFlipHint': 'Tap the cover to flip it around.',
+  'seriesWithVolume': '{series} · Vol. {volume}',
 
   // Book edit screen (book_edit_screen.dart)
   'editBookTitle': 'Edit Book',
@@ -497,6 +512,8 @@ const _en = <String, String>{
   'authorsField': 'Authors (comma-separated)',
   'illustratorsField': 'Illustrators (comma-separated)',
   'seriesField': 'Series',
+  'seriesVolumeField': 'Volume #',
+  'seriesVolumeHint': 'e.g. 3',
   'isbn13Field': 'ISBN-13',
   'publisherField': 'Publisher',
   'publishedDateField': 'Published date',
@@ -548,6 +565,11 @@ const _th = <String, String>{
   'noBooksYet': 'ยังไม่มีหนังสือ',
   'scanIsbnBarcode': 'สแกนบาร์โค้ด ISBN',
   'enterIsbnNumber': 'กรอกหมายเลข ISBN',
+  'filterStatusLabel': 'สถานะ',
+  'sortByLabel': 'เรียงตาม',
+  'sortByDateAdded': 'วันที่เพิ่ม',
+  'sortByAuthor': 'ผู้แต่ง',
+  'noSeriesGroupLabel': 'ไม่มีซีรีย์',
 
   // Reading status
   'statusNotStarted': 'ยังไม่เริ่มอ่าน',
@@ -692,6 +714,7 @@ const _th = <String, String>{
   'sourceLabel': 'ที่มา: {source}',
   'book3DPreviewTitle': 'ภาพจำลอง 3 มิติ',
   'book3DFlipHint': 'แตะที่ปกหนังสือเพื่อพลิกดูอีกด้าน',
+  'seriesWithVolume': '{series} เล่มที่ {volume}',
 
   // Book edit screen (book_edit_screen.dart)
   'editBookTitle': 'แก้ไขหนังสือ',
@@ -701,6 +724,8 @@ const _th = <String, String>{
   'authorsField': 'ผู้แต่ง (คั่นด้วยจุลภาค)',
   'illustratorsField': 'ผู้วาดภาพประกอบ (คั่นด้วยจุลภาค)',
   'seriesField': 'ซีรีย์',
+  'seriesVolumeField': 'เล่มที่',
+  'seriesVolumeHint': 'เช่น 3',
   'isbn13Field': 'ISBN-13',
   'publisherField': 'สำนักพิมพ์',
   'publishedDateField': 'วันที่เผยแพร่',
