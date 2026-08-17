@@ -231,12 +231,22 @@ class LibraryProvider extends ChangeNotifier {
       case LibrarySortField.isbn:
         return _compareNullableStrings(a.isbn13, b.isbn13);
       case LibrarySortField.series:
+        // Within the same series, group by language then category before
+        // ordering by volume, so translated/alternate editions of a series
+        // don't interleave with each other by volume number alone.
         final hasSeriesCompare =
             (a.series != null && a.series!.isNotEmpty ? 0 : 1)
                 .compareTo(b.series != null && b.series!.isNotEmpty ? 0 : 1);
         if (hasSeriesCompare != 0) return hasSeriesCompare;
         final seriesCompare = _compareNullableStrings(a.series, b.series);
         if (seriesCompare != 0) return seriesCompare;
+        final languageCompare = _compareNullableStrings(a.language, b.language);
+        if (languageCompare != 0) return languageCompare;
+        final categoryCompare = _compareNullableStrings(
+          _primaryCategoryByBookId[a.id],
+          _primaryCategoryByBookId[b.id],
+        );
+        if (categoryCompare != 0) return categoryCompare;
         return (a.seriesVolume ?? 1 << 30).compareTo(b.seriesVolume ?? 1 << 30);
       case LibrarySortField.languageGenre:
         final languageCompare = _compareNullableStrings(a.language, b.language);

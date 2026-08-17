@@ -342,24 +342,29 @@ class _CategoryPickerDialogState extends State<_CategoryPickerDialog> {
         width: double.maxFinite,
         child: library.categories.isEmpty
             ? Text(t.noCategoriesYet)
-            : SingleChildScrollView(
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final category in library.categories)
-                      FilterChip(
-                        label: Text(category.name),
-                        selected: _selectedIds.contains(category.id),
-                        onSelected: (selected) => setState(() {
-                          if (selected) {
-                            _selectedIds.add(category.id!);
-                          } else {
-                            _selectedIds.remove(category.id);
-                          }
-                        }),
-                      ),
-                  ],
+            : ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.4,
+                ),
+                child: SingleChildScrollView(
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final category in library.categories)
+                        FilterChip(
+                          label: Text(category.name),
+                          selected: _selectedIds.contains(category.id),
+                          onSelected: (selected) => setState(() {
+                            if (selected) {
+                              _selectedIds.add(category.id!);
+                            } else {
+                              _selectedIds.remove(category.id);
+                            }
+                          }),
+                        ),
+                    ],
+                  ),
                 ),
               ),
       ),
