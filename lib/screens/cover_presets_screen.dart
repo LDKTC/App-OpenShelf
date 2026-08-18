@@ -1,13 +1,11 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/book.dart';
 import '../models/cover_preset.dart';
-import '../services/image_storage_service.dart';
 import '../state/library_provider.dart';
+import '../widgets/app_image.dart';
 import '../widgets/full_image_viewer.dart';
 import 'cover_scan_screen.dart';
 
@@ -277,9 +275,7 @@ class _Thumb extends StatelessWidget {
                 // being cropped to this cell's front-cover-ish aspect ratio.
                 child: path == null
                     ? const Icon(Icons.image_not_supported_outlined, size: 20)
-                    : (isRemoteImagePath(path!)
-                        ? Image.network(path!, fit: BoxFit.contain)
-                        : Image.file(File(path!), fit: BoxFit.contain)),
+                    : AppImage(path!, fit: BoxFit.contain),
               ),
             ),
           ),

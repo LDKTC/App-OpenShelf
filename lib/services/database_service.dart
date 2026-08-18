@@ -1,5 +1,9 @@
+import 'dart:typed_data';
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
 import '../models/book.dart';
 import '../models/book_page.dart';
@@ -8,12 +12,18 @@ import '../models/cover_preset.dart';
 import '../models/stamp.dart';
 
 /// Singleton wrapper around the app's local sqflite database.
+///
+/// On Android this is a plain file under the app's private storage. On web
+/// (`kIsWeb`) there's no filesystem, so [_open] switches sqflite's
+/// [databaseFactory] to `sqflite_common_ffi_web`'s, which persists the same
+/// sqlite database inside the browser's IndexedDB — still a real, private,
+/// on-device database, just browser-backed instead of file-backed.
 class DatabaseService {
   DatabaseService._internal();
   static final DatabaseService instance = DatabaseService._internal();
 
   static const _dbName = 'quetzalib.db';
-  static const _dbVersion = 6;
+  static const _dbVersion = 7;
 
   Database? _db;
 
@@ -23,7 +33,11 @@ class DatabaseService {
   }
 
   Future<Database> _open() async {
-    final path = join(await getDatabasesPath(), _dbName);
+    if (kIsWeb) {
+      databaseFactory = databaseFactoryFfiWeb;
+    }
+    final path =
+        kIsWeb ? _dbName : join(await getDatabasesPath(), _dbName);
     return openDatabase(
       path,
       version: _dbVersion,
@@ -73,6 +87,7 @@ class DatabaseService {
         ''');
 
         await _createStatusScanTables(db);
+        await _createLocalImagesTable(db);
 
         for (final name in const [
           'Fiction',
@@ -99,8 +114,27 @@ class DatabaseService {
         if (oldVersion < 6) {
           await _migrateToV6(db);
         }
+        if (oldVersion < 7) {
+          await _createLocalImagesTable(db);
+        }
       },
     );
+  }
+
+  /// Creates the `local_images` blob store: on web, [ImageStorageService]
+  /// has nowhere else to persist a picked photo's bytes (there's no
+  /// filesystem), so it saves them here keyed by a synthetic `webimg://`
+  /// path and reads them back the same way [Book]/[BookPage]/
+  /// [BookCoverPreset] paths are otherwise resolved. Unused on native
+  /// platforms, which keep saving real files.
+  Future<void> _createLocalImagesTable(DatabaseExecutor db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS local_images (
+        path TEXT PRIMARY KEY,
+        bytes BLOB NOT NULL,
+        createdAt TEXT NOT NULL
+      )
+    ''');
   }
 
   /// Creates the reading-stamps/cover-presets/saved-pages tables shared by
@@ -470,5 +504,40 @@ class DatabaseService {
     final db = await database;
     final rows = await db.query('book_pages', orderBy: 'createdAt DESC');
     return rows.map(BookPage.fromMap).toList();
+  }
+
+  // ---------------------------------------------------------------------
+  // Local images (web's file-less stand-in for ImageStorageService)
+  // ---------------------------------------------------------------------
+
+  Future<void> putLocalImage(String key, Uint8List bytes) async {
+    final db = await database;
+    await db.insert(
+      'local_images',
+      {
+        'path': key,
+        'bytes': bytes,
+        'createdAt': DateTime.now().toIso8601String(),
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<Uint8List?> getLocalImage(String key) async {
+    final db = await database;
+    final rows = await db.query(
+      'local_images',
+      columns: ['bytes'],
+      where: 'path = ?',
+      whereArgs: [key],
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return rows.first['bytes'] as Uint8List;
+  }
+
+  Future<void> deleteLocalImage(String key) async {
+    final db = await database;
+    await db.delete('local_images', where: 'path = ?', whereArgs: [key]);
   }
 }

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:quetzalib/services/ocr_service.dart';
 import 'package:quetzalib/services/settings_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,6 +18,7 @@ void main() {
 
   group('OcrService with a Cloud Vision API key configured', () {
     late String photoPath;
+    late XFile photo;
 
     setUp(() async {
       await SettingsService.instance.setCloudVisionApiKey('test-api-key');
@@ -25,6 +27,7 @@ void main() {
       ).create();
       await file.writeAsBytes([0xFF, 0xD8, 0xFF, 0xD9]);
       photoPath = file.path;
+      photo = XFile(photoPath);
     });
 
     tearDown(() async {
@@ -62,7 +65,7 @@ void main() {
       });
 
       final result =
-          await OcrService(client: client).recognizeText(photoPath);
+          await OcrService(client: client).recognizeText(photo);
 
       expect(result, 'ชื่อหนังสือ\nสำนักพิมพ์');
     });
@@ -78,7 +81,7 @@ void main() {
       });
 
       final result =
-          await OcrService(client: client).recognizeText(photoPath);
+          await OcrService(client: client).recognizeText(photo);
 
       expect(result, '');
     });
@@ -89,7 +92,7 @@ void main() {
       });
 
       await expectLater(
-        OcrService(client: client).recognizeText(photoPath),
+        OcrService(client: client).recognizeText(photo),
         throwsA(isA<Exception>()),
       );
     });
@@ -110,7 +113,7 @@ void main() {
       });
 
       await expectLater(
-        OcrService(client: client).recognizeText(photoPath),
+        OcrService(client: client).recognizeText(photo),
         throwsA(
           isA<Exception>().having(
             (e) => e.toString(),

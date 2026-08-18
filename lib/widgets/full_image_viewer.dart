@@ -1,8 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
-import '../services/image_storage_service.dart';
+import 'app_image.dart';
 
 /// Pushes a full-screen, pinch-to-zoom preview of a single local or remote
 /// image. Used wherever a saved photo (a cover slot, a preset thumbnail)
@@ -24,9 +22,7 @@ class _FullImageViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final image = isRemoteImagePath(path)
-        ? Image.network(path, fit: BoxFit.contain)
-        : Image.file(File(path), fit: BoxFit.contain);
+    final image = AppImage(path, fit: BoxFit.contain);
 
     return Scaffold(
       backgroundColor: Colors.black,

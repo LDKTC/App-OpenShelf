@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 
@@ -9,6 +8,8 @@ import '../models/cover_preset.dart';
 import '../models/stamp.dart';
 import '../services/image_storage_service.dart';
 import '../services/settings_service.dart';
+import 'app_image.dart';
+import 'local_image_size.dart';
 import 'status_chip.dart';
 
 /// One book on the visual shelf: its active preset's front-cover or spine
@@ -116,15 +117,8 @@ class _PresetImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fallback = _InfoFallback(book: book, mode: mode);
-    if (isRemoteImagePath(path)) {
-      return Image.network(
-        path,
-        fit: fit,
-        errorBuilder: (context, error, stackTrace) => fallback,
-      );
-    }
-    return Image.file(
-      File(path),
+    return AppImage(
+      path,
       fit: fit,
       errorBuilder: (context, error, stackTrace) => fallback,
     );
@@ -227,7 +221,7 @@ class _SpineTileState extends State<_SpineTile> {
       setState(() => _size = null);
       return;
     }
-    resolveImageSize(path).then((size) {
+    resolveLocalImageSize(path).then((size) {
       if (mounted) setState(() => _size = size);
     });
   }
@@ -282,22 +276,28 @@ final _imageSizeCache = <String, Size>{};
 
 /// Resolves the intrinsic pixel size of a local or remote image, caching
 /// the result by path/URL so the same spine image is only decoded once per
-/// app session (image bytes themselves are still cached by Flutter's
-/// [ImageCache], so this just avoids redundant [ImageStreamListener]
-/// round-trips on every rebuild/scroll).
-Future<Size?> resolveImageSize(String path) {
+/// app session. Remote/local resolution mirrors [AppImage]: a network
+/// image resolves via [NetworkImage]; a local one via [resolveLocalImageSize]
+/// (a real file natively, database-stored bytes on web).
+Future<Size?> resolveImageSize(String path) async {
   final cached = _imageSizeCache[path];
-  if (cached != null) return Future.value(cached);
+  if (cached != null) return cached;
 
-  final provider =
-      isRemoteImagePath(path) ? NetworkImage(path) : FileImage(File(path)) as ImageProvider;
+  final size = isRemoteImagePath(path)
+      ? await _resolveNetworkImageSize(path)
+      : await resolveLocalImageSize(path);
+  if (size != null) _imageSizeCache[path] = size;
+  return size;
+}
+
+Future<Size?> _resolveNetworkImageSize(String path) {
+  final provider = NetworkImage(path);
   final completer = Completer<Size?>();
   final stream = provider.resolve(const ImageConfiguration());
   late final ImageStreamListener listener;
   listener = ImageStreamListener(
     (info, _) {
       final size = Size(info.image.width.toDouble(), info.image.height.toDouble());
-      _imageSizeCache[path] = size;
       stream.removeListener(listener);
       if (!completer.isCompleted) completer.complete(size);
     },

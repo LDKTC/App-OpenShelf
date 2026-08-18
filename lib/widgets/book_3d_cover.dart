@@ -1,10 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/cover_preset.dart';
-import '../services/image_storage_service.dart';
+import 'app_image.dart';
 
 /// Pushes a full-screen 3D mockup of [preset]'s front/spine/back photos.
 void showBook3DPreview(BuildContext context, BookCoverPreset preset) {
@@ -121,17 +119,11 @@ class _BookSpread extends StatelessWidget {
 
     Widget faceImage(String? path) {
       if (path == null) return placeholder;
-      return isRemoteImagePath(path)
-          ? Image.network(
-              path,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => placeholder,
-            )
-          : Image.file(
-              File(path),
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => placeholder,
-            );
+      return AppImage(
+        path,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => placeholder,
+      );
     }
 
     final spine = Container(

@@ -1,13 +1,11 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/book.dart';
 import '../models/cover_preset.dart';
-import '../services/image_storage_service.dart';
 import '../state/library_provider.dart';
+import '../widgets/app_image.dart';
 import '../widgets/book_3d_cover.dart';
 import '../widgets/full_image_viewer.dart';
 import '../widgets/stamp_timeline.dart';
@@ -231,8 +229,8 @@ class BookDetailScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(6),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(6),
-                      child: Image.file(
-                        File(page.imagePath),
+                      child: AppImage(
+                        page.imagePath,
                         width: 72,
                         height: 96,
                         fit: BoxFit.cover,
@@ -419,17 +417,11 @@ class _CoverArt extends StatelessWidget {
     Widget image;
     final frontPath = activePreset?.frontImagePath;
     if (frontPath != null) {
-      image = isRemoteImagePath(frontPath)
-          ? Image.network(
-              frontPath,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => placeholder,
-            )
-          : Image.file(
-              File(frontPath),
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => placeholder,
-            );
+      image = AppImage(
+        frontPath,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => placeholder,
+      );
     } else if (book.thumbnailUrl != null) {
       image = Image.network(
         book.thumbnailUrl!,

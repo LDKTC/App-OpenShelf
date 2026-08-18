@@ -54,16 +54,22 @@ library, stored locally on-device in SQLite.
 
 ## Tech stack
 
-- Flutter (Android target only), Material 3
-- `sqflite` for local storage
+- Flutter (Android target, plus a web/PWA target -- see [Web
+  (PWA)](#web-pwa)), Material 3
+- `sqflite` for local storage (native), `sqflite_common_ffi_web` for the
+  same on-device database on web (a real sqlite file, persisted in the
+  browser's IndexedDB rather than on a filesystem)
 - `mobile_scanner` for barcode scanning + `permission_handler` for the
   camera permission
 - `image_picker` for cover/spine/page photo capture, and the OCR-scan
   photo source in the book editor
 - `google_mlkit_document_scanner` for cover/spine/back capture (auto edge
-  detection, perspective correction, cropping)
+  detection, perspective correction, cropping) -- Android only; on web the
+  cover/page photo flows fall back to `image_picker`'s plain gallery/camera
+  picker
 - `google_mlkit_text_recognition` for on-device OCR (default; Latin script
-  only), with an optional Cloud Vision API fallback for Thai text
+  only), with an optional Cloud Vision API fallback for Thai text -- on-device
+  recognition is Android/iOS only, so web always needs a Cloud Vision key
 - `provider` for state management
 - `http` for metadata lookups (Google Books JSON, Open Library JSON) and
   the optional Cloud Vision OCR call
@@ -87,12 +93,20 @@ lib/
     document_scanner_service.dart  cover/spine/back capture via the ML Kit document scanner
     ocr_service.dart            scan-to-fill OCR: Cloud Vision if configured, else on-device
     image_storage_service.dart  persists scanned cover/page photos on-device
+                                 (delegates to local_image_platform*.dart --
+                                 real files natively, IndexedDB-backed blobs
+                                 on web)
     update_service.dart         checks GitHub Releases, downloads + installs the APK
+                                 (native only; see widgets/app_update_section*.dart)
     apk_installer.dart          platform channel to the native install-APK intent
   state/library_provider.dart   app state (ChangeNotifier) wrapping the DB
   screens/                      library list/shelf, scan, book detail/edit, cover/page
                                  scanning, ISBN entry, categories, settings
-  widgets/                      shared UI pieces
+  widgets/                      shared UI pieces, incl. app_image.dart (the
+                                 native-file-vs-web-blob image widget) and
+                                 app_update_section.dart (native-only updater UI)
+web/                             PWA shell: index.html, manifest.json, icons
+                                 (see Web (PWA) below)
 ```
 
 ## Getting started
@@ -138,6 +152,61 @@ real, unshared signing config before a production/Play Store release. If
 you've already got a build installed from before this change, you'll need
 to uninstall it once before an update signed with the new shared key will
 install.
+
+## Web (PWA)
+
+Alongside the Android app, QuetzaLib also builds as an installable web app
+(PWA) -- usable from any modern browser, including Safari on iPhone/iPad,
+which have no Android APK equivalent to install.
+
+```bash
+flutter pub get
+dart run sqflite_common_ffi_web:setup   # fetches sqlite3.wasm + sqflite_sw.js into web/
+flutter run -d chrome                    # local dev
+flutter build web --release              # -> build/web/
+```
+
+`.github/workflows/build.yml` runs `flutter build web` on every push/PR as a
+CI check (`build-web` job); `.github/workflows/deploy-web.yml` builds and
+publishes `build/web/` to GitHub Pages on every push to `main`. **The
+repository's Pages source needs to be set to "GitHub Actions" once**
+(Settings → Pages → Build and deployment → Source) before that workflow can
+actually publish.
+
+Everything that reads/writes the library works the same on web as on
+Android -- same `LibraryProvider`/`DatabaseService` code, same auto-loaded
+local database on startup -- the difference is entirely in *where* that
+data lives, since a browser has no filesystem:
+
+- **Database**: `sqflite_common_ffi_web` backs the same `sqflite` API with a
+  real sqlite database file, persisted in the browser's IndexedDB instead of
+  on disk. It's still private to this browser profile/device, just not a
+  file you can browse to.
+- **Cover/page photos**: native saves copy the picked photo into the app's
+  documents directory and stores that file path; web instead saves the
+  photo's bytes into a `local_images` table in that same on-device database,
+  under a synthetic `webimg://...` path. `AppImage` (`lib/widgets/app_image.dart`)
+  and `ImageStorageService` hide this difference from every screen.
+- **Two mobile-only features degrade gracefully instead of being ported**:
+  the ML Kit document scanner (auto-crop/perspective-correct cover/spine/back
+  photos) is Android-only even natively, so its "Scan document" option is
+  hidden on web in favor of `image_picker`'s plain gallery/camera picker --
+  on iPhone Safari this still offers "Take Photo" via the OS file picker.
+  The in-app APK updater (**Settings → App update**) doesn't apply to a
+  browser tab at all and is simply absent there (`AppUpdateSection`).
+- On-device OCR (ML Kit text recognition) is also Android/iOS-only, so the
+  scan-to-fill buttons in the book editor need a Cloud Vision API key
+  configured in Settings to work on web -- see [OCR text
+  scanning](#ocr-text-scanning) below.
+
+### Installing on iPhone
+
+Safari doesn't support the install prompt other browsers show automatically;
+add QuetzaLib to the home screen manually instead: open the deployed URL in
+Safari, tap the **Share** icon, then **Add to Home Screen**. It then launches
+full-screen like a native app (`web/index.html`'s
+`apple-mobile-web-app-capable` meta tag + `apple-touch-icon`), with its data
+staying local to that installation the same way any other PWA's does.
 
 ## OCR text scanning
 
