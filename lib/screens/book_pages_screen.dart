@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -7,6 +5,7 @@ import '../l10n/app_localizations.dart';
 import '../models/book.dart';
 import '../models/book_page.dart';
 import '../state/library_provider.dart';
+import '../widgets/app_image.dart';
 import 'page_scan_screen.dart';
 
 /// Gallery of every page/illustration saved as a reminder for [book].
@@ -97,8 +96,8 @@ class _PageThumb extends StatelessWidget {
       borderRadius: BorderRadius.circular(6),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(6),
-        child: Image.file(
-          File(page.imagePath),
+        child: AppImage(
+          page.imagePath,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) => Container(
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -213,7 +212,7 @@ class _PageDetailScreen extends StatelessWidget {
         children: [
           Expanded(
             child: InteractiveViewer(
-              child: Center(child: Image.file(File(current.imagePath))),
+              child: Center(child: AppImage(current.imagePath)),
             ),
           ),
           if (current.note != null)

@@ -1,10 +1,10 @@
-import 'dart:io';
-
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../l10n/app_localizations.dart';
 import '../services/document_scanner_service.dart';
+import '../widgets/app_image.dart';
 import 'book_edit_screen.dart';
 
 enum _CoverSource { scan, gallery }
@@ -34,12 +34,15 @@ class _ScanCoverFirstScreenState extends State<ScanCoverFirstScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              leading: const Icon(Icons.document_scanner_outlined),
-              title: Text(t.scanDocument),
-              subtitle: Text(t.scanDocumentSubtitle),
-              onTap: () => Navigator.of(ctx).pop(_CoverSource.scan),
-            ),
+            // The document scanner needs Google Play services and isn't
+            // available on web.
+            if (!kIsWeb)
+              ListTile(
+                leading: const Icon(Icons.document_scanner_outlined),
+                title: Text(t.scanDocument),
+                subtitle: Text(t.scanDocumentSubtitle),
+                onTap: () => Navigator.of(ctx).pop(_CoverSource.scan),
+              ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
               title: Text(t.chooseFromGallery),
@@ -121,7 +124,7 @@ class _ScanCoverFirstScreenState extends State<ScanCoverFirstScreen> {
               clipBehavior: Clip.antiAlias,
               child: _file == null
                   ? const Center(child: Icon(Icons.add_a_photo_outlined, size: 40))
-                  : Image.file(File(_file!.path), fit: BoxFit.cover),
+                  : AppImage(_file!.path, fit: BoxFit.cover),
             ),
           ),
           if (_file != null) ...[

@@ -1,10 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 import '../models/book.dart';
 import '../models/stamp.dart';
-import '../services/image_storage_service.dart';
+import 'app_image.dart';
 import 'status_chip.dart';
 
 class BookListTile extends StatelessWidget {
@@ -45,17 +43,11 @@ class BookListTile extends StatelessWidget {
         height: 64,
         child: path == null
             ? placeholder
-            : (isRemoteImagePath(path)
-                ? Image.network(
-                    path,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => placeholder,
-                  )
-                : Image.file(
-                    File(path),
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => placeholder,
-                  )),
+            : AppImage(
+                path,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => placeholder,
+              ),
       ),
       title: Text(book.title, maxLines: 2, overflow: TextOverflow.ellipsis),
       subtitle: Text(book.authorsDisplay, maxLines: 1, overflow: TextOverflow.ellipsis),

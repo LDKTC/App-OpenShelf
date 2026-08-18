@@ -1,5 +1,4 @@
-import 'dart:io';
-
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +9,7 @@ import '../models/cover_preset.dart';
 import '../services/document_scanner_service.dart';
 import '../services/image_storage_service.dart';
 import '../state/library_provider.dart';
+import '../widgets/app_image.dart';
 import '../widgets/full_image_viewer.dart';
 
 enum _CoverSlot { front, spine, back }
@@ -107,12 +107,15 @@ class _CoverScanScreenState extends State<CoverScanScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              leading: const Icon(Icons.document_scanner_outlined),
-              title: Text(t.scanDocument),
-              subtitle: Text(t.scanDocumentSubtitle),
-              onTap: () => Navigator.of(ctx).pop(_CoverSource.scan),
-            ),
+            // The document scanner needs Google Play services and isn't
+            // available on web.
+            if (!kIsWeb)
+              ListTile(
+                leading: const Icon(Icons.document_scanner_outlined),
+                title: Text(t.scanDocument),
+                subtitle: Text(t.scanDocumentSubtitle),
+                onTap: () => Navigator.of(ctx).pop(_CoverSource.scan),
+              ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
               title: Text(t.chooseFromGallery),
@@ -361,11 +364,9 @@ class _SlotTile extends StatelessWidget {
                 if (!hasImage)
                   const Center(child: Icon(Icons.add_a_photo_outlined, size: 32))
                 else if (pickedFile != null)
-                  Image.file(File(pickedFile.path), fit: BoxFit.cover)
-                else if (isRemoteImagePath(basePath!))
-                  Image.network(basePath, fit: BoxFit.cover)
+                  AppImage(pickedFile.path, fit: BoxFit.cover)
                 else
-                  Image.file(File(basePath), fit: BoxFit.cover),
+                  AppImage(basePath!, fit: BoxFit.cover),
                 if (hasImage) ...[
                   Positioned(
                     top: 4,

@@ -1,11 +1,9 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/book.dart';
 import '../models/stamp.dart';
-import '../services/image_storage_service.dart';
+import 'app_image.dart';
 import 'status_chip.dart';
 
 /// Shows a quick "hold to preview" bottom sheet for [book] — its cover plus
@@ -72,19 +70,12 @@ class _BookPreviewSheet extends StatelessWidget {
                     height: 104,
                     child: path == null
                         ? placeholder
-                        : (isRemoteImagePath(path)
-                            ? Image.network(
-                                path,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    placeholder,
-                              )
-                            : Image.file(
-                                File(path),
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    placeholder,
-                              )),
+                        : AppImage(
+                            path,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                placeholder,
+                          ),
                   ),
                 ),
                 const SizedBox(width: 12),

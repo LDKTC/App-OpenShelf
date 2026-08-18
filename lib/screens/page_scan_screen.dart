@@ -1,5 +1,4 @@
-import 'dart:io';
-
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +9,7 @@ import '../models/book_page.dart';
 import '../services/document_scanner_service.dart';
 import '../services/image_storage_service.dart';
 import '../state/library_provider.dart';
+import '../widgets/app_image.dart';
 
 enum _PageSource { scan, gallery }
 
@@ -49,12 +49,15 @@ class _PageScanScreenState extends State<PageScanScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              leading: const Icon(Icons.document_scanner_outlined),
-              title: Text(t.scanDocument),
-              subtitle: Text(t.scanDocumentSubtitle),
-              onTap: () => Navigator.of(ctx).pop(_PageSource.scan),
-            ),
+            // The document scanner needs Google Play services and isn't
+            // available on web.
+            if (!kIsWeb)
+              ListTile(
+                leading: const Icon(Icons.document_scanner_outlined),
+                title: Text(t.scanDocument),
+                subtitle: Text(t.scanDocumentSubtitle),
+                onTap: () => Navigator.of(ctx).pop(_PageSource.scan),
+              ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
               title: Text(t.chooseFromGallery),
@@ -157,7 +160,7 @@ class _PageScanScreenState extends State<PageScanScreen> {
               clipBehavior: Clip.antiAlias,
               child: _file == null
                   ? const Center(child: Icon(Icons.add_a_photo_outlined, size: 40))
-                  : Image.file(File(_file!.path), fit: BoxFit.cover),
+                  : AppImage(_file!.path, fit: BoxFit.cover),
             ),
           ),
           const SizedBox(height: 16),

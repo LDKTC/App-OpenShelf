@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -12,6 +10,7 @@ import '../models/cover_preset.dart';
 import '../services/image_storage_service.dart';
 import '../services/ocr_service.dart';
 import '../state/library_provider.dart';
+import '../widgets/app_image.dart';
 import '../widgets/suggestion_text_field.dart';
 import 'book_detail_screen.dart';
 
@@ -215,7 +214,7 @@ class _BookEditScreenState extends State<BookEditScreen> {
 
       String recognized;
       try {
-        recognized = await _ocrService.recognizeText(photo.path);
+        recognized = await _ocrService.recognizeText(photo);
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -271,7 +270,7 @@ class _BookEditScreenState extends State<BookEditScreen> {
                   padding: const EdgeInsets.only(bottom: 16),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: Image.file(File(widget.scannedCoverPath!), height: 140),
+                    child: AppImage(widget.scannedCoverPath!, height: 140),
                   ),
                 ),
               )

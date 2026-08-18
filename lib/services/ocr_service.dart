@@ -1,8 +1,9 @@
 import 'dart:convert';
-import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 
 import 'settings_service.dart';
 
@@ -13,7 +14,8 @@ import 'settings_service.dart';
 /// Settings — it's accurate for Thai as well as Latin script, at the cost
 /// of a network call billed to that key. Without a key configured, this
 /// falls back to on-device ML Kit text recognition: free and offline, but
-/// Latin-script only, so Thai-titled books won't be recognized.
+/// Latin-script only, so Thai-titled books won't be recognized, and
+/// Android/iOS-only, so web always needs a Cloud Vision key instead.
 class OcrService {
   OcrService({http.Client? client}) : _client = client ?? http.Client();
 
@@ -22,12 +24,18 @@ class OcrService {
 
   final http.Client _client;
 
-  Future<String> recognizeText(String imagePath) async {
+  Future<String> recognizeText(XFile photo) async {
     final apiKey = await SettingsService.instance.getCloudVisionApiKey();
     if (apiKey != null && apiKey.isNotEmpty) {
-      return _recognizeWithCloudVision(imagePath, apiKey);
+      return _recognizeWithCloudVision(photo, apiKey);
     }
-    return _recognizeOnDevice(imagePath);
+    if (kIsWeb) {
+      throw Exception(
+        'On-device text recognition isn\'t available on web. Set a Cloud '
+        'Vision API key in Settings to scan text here.',
+      );
+    }
+    return _recognizeOnDevice(photo.path);
   }
 
   Future<String> _recognizeOnDevice(String imagePath) async {
@@ -43,10 +51,10 @@ class OcrService {
   }
 
   Future<String> _recognizeWithCloudVision(
-    String imagePath,
+    XFile photo,
     String apiKey,
   ) async {
-    final bytes = await File(imagePath).readAsBytes();
+    final bytes = await photo.readAsBytes();
     final uri = Uri.parse(
       _visionEndpoint,
     ).replace(queryParameters: {'key': apiKey});
