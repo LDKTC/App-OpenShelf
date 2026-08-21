@@ -176,6 +176,107 @@ class SpineShelfView extends StatelessWidget {
   }
 }
 
+/// One section of the sectioned spine shelf: a single horizontally
+/// scrolling row of spines, used instead of [SpineShelfView]'s wrapping
+/// layout when the shelf is grouped (e.g. one row per series) — a section
+/// with more books than fit the screen width slides sideways rather than
+/// spilling onto a second row.
+class SpineShelfRow extends StatelessWidget {
+  const SpineShelfRow({
+    super.key,
+    required this.books,
+    required this.presetFor,
+    this.statusFor,
+    required this.onTapBook,
+    this.onLongPressBook,
+  });
+
+  final List<Book> books;
+  final BookCoverPreset? Function(int bookId) presetFor;
+  final StampType? Function(int bookId)? statusFor;
+  final void Function(int bookId) onTapBook;
+  final void Function(int bookId)? onLongPressBook;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: SpineShelfView.rowHeight,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        scrollDirection: Axis.horizontal,
+        itemCount: books.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 6),
+        itemBuilder: (context, index) {
+          final book = books[index];
+          return _SpineTile(
+            key: ValueKey(book.id),
+            book: book,
+            path: presetFor(book.id!)?.spineImagePath,
+            currentStatus: statusFor?.call(book.id!),
+            height: SpineShelfView.rowHeight,
+            onTap: () => onTapBook(book.id!),
+            onLongPress: onLongPressBook == null
+                ? null
+                : () => onLongPressBook!(book.id!),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// One section of the sectioned cover shelf: a single horizontally
+/// scrolling row of covers, sized via the same width/height ratio the flat
+/// cover grid uses — the cover-mode counterpart of [SpineShelfRow].
+class CoverShelfRow extends StatelessWidget {
+  const CoverShelfRow({
+    super.key,
+    required this.books,
+    required this.activePresetFor,
+    this.statusFor,
+    required this.onTapBook,
+    this.onLongPressBook,
+  });
+
+  final List<Book> books;
+  final BookCoverPreset? Function(int bookId) activePresetFor;
+  final StampType? Function(int bookId)? statusFor;
+  final void Function(int bookId) onTapBook;
+  final void Function(int bookId)? onLongPressBook;
+
+  static const double rowHeight = 190;
+  static const double _aspectRatio = 0.68; // width / height
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: rowHeight,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        scrollDirection: Axis.horizontal,
+        itemCount: books.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 10),
+        itemBuilder: (context, index) {
+          final book = books[index];
+          return SizedBox(
+            width: rowHeight * _aspectRatio,
+            child: BookShelfTile(
+              book: book,
+              activePreset: activePresetFor(book.id!),
+              currentStatus: statusFor?.call(book.id!),
+              mode: ShelfDisplayMode.cover,
+              onTap: () => onTapBook(book.id!),
+              onLongPress: onLongPressBook == null
+                  ? null
+                  : () => onLongPressBook!(book.id!),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
 class _SpineTile extends StatefulWidget {
   const _SpineTile({
     super.key,

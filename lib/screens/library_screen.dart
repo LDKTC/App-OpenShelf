@@ -4,9 +4,11 @@ import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../models/book.dart';
 import '../services/settings_service.dart';
+import '../state/library_grouping.dart';
 import '../state/library_provider.dart';
 import '../widgets/book_list_tile.dart';
 import '../widgets/book_preview_sheet.dart';
+import '../widgets/section_header.dart';
 import '../widgets/shelf_grid_view.dart';
 import 'book_detail_screen.dart';
 import 'book_edit_screen.dart';
@@ -324,33 +326,6 @@ class _BookRow extends _LibraryRow {
 
 class _DividerRow extends _LibraryRow {}
 
-/// The section header a book falls under for the current [sortField], or
-/// null when that field isn't grouped (title/author/publisher/ISBN stay a
-/// plain flat list, same as before sorting existed).
-String? _groupHeaderFor(Book book, LibrarySortField sortField, AppLocalizations t) {
-  switch (sortField) {
-    case LibrarySortField.dateAdded:
-      final d = book.dateAdded;
-      final mm = d.month.toString().padLeft(2, '0');
-      final dd = d.day.toString().padLeft(2, '0');
-      return '${d.year}-$mm-$dd';
-    case LibrarySortField.series:
-      final series = book.series;
-      return (series == null || series.isEmpty) ? t.noSeriesGroupLabel : series;
-    case LibrarySortField.languageGenre:
-      final parts = [
-        if (book.language != null && book.language!.isNotEmpty) book.language!,
-        if (book.genre != null && book.genre!.isNotEmpty) book.genre!,
-      ];
-      return parts.isEmpty ? t.noLanguageGenreGroupLabel : parts.join(' · ');
-    case LibrarySortField.title:
-    case LibrarySortField.author:
-    case LibrarySortField.publisher:
-    case LibrarySortField.isbn:
-      return null;
-  }
-}
-
 /// Turns the already-sorted [books] into header/book/divider rows: a
 /// header is inserted whenever the group key changes, a divider between
 /// two consecutive books in the same (or no) group — mirroring what
@@ -363,7 +338,7 @@ List<_LibraryRow> _buildLibraryRows(
   final rows = <_LibraryRow>[];
   String? lastHeader;
   for (final book in books) {
-    final header = _groupHeaderFor(book, sortField, t);
+    final header = groupHeaderFor(book, sortField, t);
     if (header != null && header != lastHeader) {
       rows.add(_HeaderRow(header));
     } else if (rows.isNotEmpty && rows.last is _BookRow) {
@@ -397,7 +372,7 @@ class _BookListView extends StatelessWidget {
       itemBuilder: (context, index) {
         final row = rows[index];
         return switch (row) {
-          _HeaderRow(:final label) => _SectionHeader(label: label),
+          _HeaderRow(:final label) => SectionHeader(label: label),
           _DividerRow() => const Divider(height: 1),
           _BookRow(:final book) => BookListTile(
               book: book,
@@ -416,27 +391,6 @@ class _BookListView extends StatelessWidget {
             ),
         };
       },
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-      ),
     );
   }
 }
