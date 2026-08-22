@@ -176,6 +176,52 @@ class SpineShelfView extends StatelessWidget {
   }
 }
 
+/// The expanded form of a spine section: the same wrapping layout
+/// [SpineShelfView] uses for the flat (ungrouped) spine shelf, but scoped to
+/// one section's books and without its own scroll view — it's embedded
+/// inside the shelf's outer scroll view.
+class SpineShelfGrid extends StatelessWidget {
+  const SpineShelfGrid({
+    super.key,
+    required this.books,
+    required this.presetFor,
+    this.statusFor,
+    required this.onTapBook,
+    this.onLongPressBook,
+  });
+
+  final List<Book> books;
+  final BookCoverPreset? Function(int bookId) presetFor;
+  final StampType? Function(int bookId)? statusFor;
+  final void Function(int bookId) onTapBook;
+  final void Function(int bookId)? onLongPressBook;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 12,
+        children: [
+          for (final book in books)
+            _SpineTile(
+              key: ValueKey(book.id),
+              book: book,
+              path: presetFor(book.id!)?.spineImagePath,
+              currentStatus: statusFor?.call(book.id!),
+              height: SpineShelfView.rowHeight,
+              onTap: () => onTapBook(book.id!),
+              onLongPress: onLongPressBook == null
+                  ? null
+                  : () => onLongPressBook!(book.id!),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 /// One section of the sectioned spine shelf: a single horizontally
 /// scrolling row of spines, used instead of [SpineShelfView]'s wrapping
 /// layout when the shelf is grouped (e.g. one row per series) — a section
@@ -273,6 +319,54 @@ class CoverShelfRow extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+/// The expanded form of a cover section: the same 3-column wrapping grid
+/// the flat (ungrouped) cover shelf uses, but scoped to one section's books
+/// and non-scrolling — it's embedded inside the shelf's outer scroll view.
+class CoverShelfGrid extends StatelessWidget {
+  const CoverShelfGrid({
+    super.key,
+    required this.books,
+    required this.activePresetFor,
+    this.statusFor,
+    required this.onTapBook,
+    this.onLongPressBook,
+  });
+
+  final List<Book> books;
+  final BookCoverPreset? Function(int bookId) activePresetFor;
+  final StampType? Function(int bookId)? statusFor;
+  final void Function(int bookId) onTapBook;
+  final void Function(int bookId)? onLongPressBook;
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      padding: const EdgeInsets.all(12),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: 0.68,
+      ),
+      itemCount: books.length,
+      itemBuilder: (context, index) {
+        final book = books[index];
+        return BookShelfTile(
+          book: book,
+          activePreset: activePresetFor(book.id!),
+          currentStatus: statusFor?.call(book.id!),
+          mode: ShelfDisplayMode.cover,
+          onTap: () => onTapBook(book.id!),
+          onLongPress:
+              onLongPressBook == null ? null : () => onLongPressBook!(book.id!),
+        );
+      },
     );
   }
 }

@@ -91,6 +91,8 @@ class AppLocalizations {
   String get noSeriesGroupLabel => _t('noSeriesGroupLabel');
   String get noLanguageGenreGroupLabel => _t('noLanguageGenreGroupLabel');
   String bookCountLabel(String count) => _p('bookCountLabel', {'count': count});
+  String get expandSectionTooltip => _t('expandSectionTooltip');
+  String get collapseSectionTooltip => _t('collapseSectionTooltip');
 
   // ---------------------------------------------------------------------
   // Reading-status filters (LibraryStatusFilter) / stamps (StampType)
@@ -371,6 +373,8 @@ const _en = <String, String>{
   'noSeriesGroupLabel': 'No series',
   'noLanguageGenreGroupLabel': 'No language/genre',
   'bookCountLabel': '{count} books',
+  'expandSectionTooltip': 'Expand section',
+  'collapseSectionTooltip': 'Collapse section',
 
   // Reading status
   'statusNotStarted': 'Not started',
@@ -623,6 +627,8 @@ const _th = <String, String>{
   'noSeriesGroupLabel': 'ไม่มีซีรีย์',
   'noLanguageGenreGroupLabel': 'ไม่มีภาษา/ประเภท',
   'bookCountLabel': '{count} เล่ม',
+  'expandSectionTooltip': 'ขยายส่วน',
+  'collapseSectionTooltip': 'ย่อส่วน',
 
   // Reading status
   'statusNotStarted': 'ยังไม่เริ่มอ่าน',
