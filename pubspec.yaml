@@ -2,7 +2,7 @@ name: quetzalib
 description: "QuetzaLib - scan a book's ISBN, look up its details, and manage your personal library."
 publish_to: 'none'
 
-version: 1.6.2+11
+version: 1.7.0+12
 
 environment:
   sdk: ^3.9.2
